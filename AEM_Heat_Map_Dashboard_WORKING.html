@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AEM Dealer Sales Heat Map & Pin Dashboard</title>
+<link rel="stylesheet" href="https://atlas.microsoft.com/sdk/javascript/mapcontrol/2/atlas.min.css" type="text/css">
+<style>
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    /* Enhanced filter panel - FIXED: Smaller purple area */
+    .filter-panel {
+        padding: 8px 15px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        align-items: center;
+    }
+
+    .filter-group {
+        min-width: 180px;
+    }
+
+    .filter-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .filter-group select {
+        width: 100%;
+        padding: 8px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .filter-group select:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .filter-group select:focus {
+        outline: 3px solid rgba(255,255,255,0.5);
+    }
+
+    /* Info panels */
+    .info-panel {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        min-width: 200px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .info-panel h4 {
+        margin: 0 0 10px 0;
+        color: #667eea;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    #rbmList {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        max-height: 120px;
+        overflow-y: auto;
+    }
+
+    #rbmList li {
+        padding: 5px 0;
+        font-size: 13px;
+        color: #333;
+        border-bottom: 1px solid #eee;
+    }
+
+    #rbmList li:last-child {
+        border-bottom: none;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .stat-item {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 6px;
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #667eea;
+    }
+
+    .stat-label {
+        font-size: 11px;
+        color: #666;
+        text-transform: uppercase;
+        margin-top: 5px;
+    }
+
+    /* Map styling */
+    #myMap {
+        flex: 1;
+        width: 100%;
+        position: relative;
+    }
+
+    /* Map controls */
+    .map-controls {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        z-index: 10;
+    }
+
+    .map-controls h4 {
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        color: #333;
+    }
+
+    .toggle-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .toggle-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .toggle-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+    }
+
+    .toggle-item label {
+        font-size: 13px;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    /* Enhanced popup */
+    .popup-content {
+        font-size: 14px;
+        padding: 5px;
+        max-width: 300px;
+    }
+
+    .popup-content h3 {
+        margin: 0 0 10px 0;
+        color: #667eea;
+        font-size: 16px;
+        border-bottom: 2px solid #667eea;
+        padding-bottom: 5px;
+    }
+
+    .popup-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .popup-row:last-child {
+        border-bottom: none;
+    }
+
+    .popup-label {
+        font-weight: 600;
+        color: #555;
+    }
+
+    .popup-value {
+        color: #333;
+        text-align: right;
+    }
+
+    /* Loading overlay */
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.95);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .loading-spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+        margin-top: 20px;
+        font-size: 18px;
+        color: #667eea;
+        font-weight: 600;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    /* Error message */
+    .error-message {
+        background: #fee;
+        color: #c33;
+        padding: 15px;
+        margin: 10px;
+        border-radius: 8px;
+        border: 1px solid #fcc;
+    }
+
+    /* Legend */
+    .map-legend {
+        position: absolute;
+        bottom: 30px;
+        left: 20px;
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        z-index: 10;
+        min-width: 200px;
+    }
+
+    .map-legend h4 {
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        color: #333;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin: 5px 0;
+        font-size: 12px;
+    }
+
+    .legend-color {
+        width: 30px;
+        height: 15px;
+        margin-right: 10px;
+        border-radius: 3px;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Filter Panel -->
+    <div class="filter-panel">
+        <div class="filter-group">
+            <label>Nation</label>
+            <select id="nationFilter" onchange="applyFilters()">
+                <option value="">All Nations</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>State / Region</label>
+            <select id="stateFilter" onchange="applyFilters()">
+                <option value="">All States</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>County</label>
+            <select id="countyFilter" onchange="applyFilters()">
+                <option value="">All Counties</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Territory</label>
+            <select id="territoryFilter" onchange="applyFilters()">
+                <option value="">All Territories</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>RBM</label>
+            <select id="rbmFilter" onchange="applyFilters()">
+                <option value="">All RBMs</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Segment</label>
+            <select id="segmentFilter" onchange="applyFilters()">
+                <option value="">All Segments</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Product Level</label>
+            <select id="productFilter" onchange="applyFilters()">
+                <option value="">All Products</option>
+            </select>
+        </div>
+
+        <!-- Stats Panel -->
+        <div class="info-panel">
+            <h4>Dashboard Stats</h4>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalDealers">0</div>
+                    <div class="stat-label">Dealers</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalQuantity">0</div>
+                    <div class="stat-label">Units</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RBM List Panel -->
+        <div class="info-panel">
+            <h4>Active RBMs</h4>
+            <ul id="rbmList"></ul>
+        </div>
+    </div>
+
+    <!-- Map Container -->
+    <div id="myMap">
+        <!-- Map Controls Overlay -->
+        <div class="map-controls">
+            <h4>Map Layers</h4>
+            <div class="toggle-group">
+                <div class="toggle-item">
+                    <input type="checkbox" id="togglePins" checked onchange="toggleLayer('pins')">
+                    <label for="togglePins">Dealer Pins</label>
+                </div>
+                <div class="toggle-item">
+                    <input type="checkbox" id="toggleHeat" checked onchange="toggleLayer('heat')">
+                    <label for="toggleHeat">Sales Heat Map</label>
+                </div>
+                <div class="toggle-item">
+                    <input type="checkbox" id="toggleLabels" onchange="toggleLayer('labels')">
+                    <label for="toggleLabels">Dealer Labels</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Map Legend -->
+        <div class="map-legend">
+            <h4>Heat Map Legend</h4>
+            <div class="legend-item">
+                <div class="legend-color" style="background: rgba(255,0,0,0.8);"></div>
+                <span>High Sales (&gt;100 units)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: rgba(255,165,0,0.6);"></div>
+                <span>Medium Sales (50-100 units)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: rgba(255,255,0,0.4);"></div>
+                <span>Low Sales (10-50 units)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: rgba(0,0,255,0.3);"></div>
+                <span>Very Low (&lt;10 units)</span>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Loading AEM data from Synapse...</div>
+        </div>
+    </div>
+</div>
+
+<script src="https://atlas.microsoft.com/sdk/javascript/mapcontrol/2/atlas.min.js"></script>
+<script>
+    // ====== CONFIGURATION ======
+    const SYNAPSE_CONFIG = {
+        // Replace with your actual API endpoint that queries Synapse
+        apiEndpoint: 'http://127.0.0.1:5000/api/getAEMData',
+
+
+        // Or use the backend_api.py we created earlier
+        
+        // Your Synapse workspace details (for documentation)
+        workspace: 'hcmasynapse-ondemand.sql.azuresynapse.net',
+        database: 'DBP',
+        
+        // The view/query to use
+        query: `
+            SELECT 
+                ReportDate,
+                Nation,
+                State,
+                County,
+                Territory,
+                RBM,
+                MFG_Quantity,
+                ParentDealerId,
+                ParentDealerName,
+                Dealer_Id,
+                Mfg_Model,
+                Mfg_Product_Name,
+                Product_Level2,
+                SerialNumber,
+                Summary,
+                Segment,
+                -- You'll need to add these location fields to your table or join to a location table
+                Latitude,
+                Longitude
+            FROM dbo.YourAEMTableName
+            WHERE Latitude IS NOT NULL 
+              AND Longitude IS NOT NULL
+        `
+    };
+
+    // Azure Maps subscription key
+    const AZURE_MAPS_KEY = 'D2rj4Lkx4masQx5oO7bANUDBBDm8qLSgAAbH3jW7QdyRkS4CIbcpJQQJ99BEACYeBjFTRtVWAAAgAZMP4Mo0';
+
+    // ====== GLOBAL VARIABLES ======
+    let dealerData = [];
+    let map, dealerSource, dealerLayer, heatLayer, labelLayer, popup;
+    let allNations = new Set();
+    let allStates = new Set();
+    let allCounties = new Set();
+    let allTerritories = new Set();
+    let allRBMs = new Set();
+    let allSegments = new Set();
+    let allProducts = new Set();
+
+    // ====== INITIALIZE MAP ======
+    map = new atlas.Map('myMap', {
+        center: [-95.7129, 55.0], // Center on Canada
+        zoom: 3.5,
+        minZoom: 2,    // ADDED: Prevent zooming too far out
+        maxZoom: 18,   // ADDED: Allow close zoom
+        style: 'road', // or 'satellite', 'night', 'grayscale_dark', 'grayscale_light'
+        authOptions: {
+            authType: 'subscriptionKey',
+            subscriptionKey: AZURE_MAPS_KEY
+        },
+        // ADDED: Enable zoom controls
+        showZoomControl: true,
+        showPitchControl: false,
+        showCompass: false
+    });
+
+    // ====== FETCH DATA FROM SYNAPSE ======
+    async function fetchAEMDataFromSynapse() {
+        try {
+            const response = await fetch(SYNAPSE_CONFIG.apiEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    query: SYNAPSE_CONFIG.query
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data.results || data;
+
+        } catch (error) {
+            console.error('Error fetching data from Synapse:', error);
+            console.warn('Using sample data for demonstration');
+            return getSampleAEMData();
+        }
+    }
+
+    // ====== SAMPLE DATA (for testing without Synapse connection) ======
+    function getSampleAEMData() {
+        return [
+            { ReportDate: '2024-01-15', Nation: 'Canada', State: 'ON', County: 'Toronto', Territory: 'Central', RBM: 'Quoc Nguyen', MFG_Quantity: 125, ParentDealerId: 'WJX200', ParentDealerName: 'Wajax Limited', Dealer_Id: 'WJX200-01', Mfg_Model: 'Model-A', Mfg_Product_Name: 'Product A', Product_Level2: 'Heavy Equipment', SerialNumber: 'SN12345', Summary: 'Full Line Dealer', Segment: 'Construction', Latitude: 43.6532, Longitude: -79.3832 },
+            { ReportDate: '2024-01-15', Nation: 'Canada', State: 'ON', County: 'Peel', Territory: 'Central', RBM: 'Quoc Nguyen', MFG_Quantity: 98, ParentDealerId: 'WJX201', ParentDealerName: 'Wajax Limited - Mississauga', Dealer_Id: 'WJX201-01', Mfg_Model: 'Model-B', Mfg_Product_Name: 'Product B', Product_Level2: 'Heavy Equipment', SerialNumber: 'SN12346', Summary: 'Full Line Dealer', Segment: 'Construction', Latitude: 43.5890, Longitude: -79.6441 },
+            { ReportDate: '2024-01-15', Nation: 'Canada', State: 'ON', County: 'Ottawa', Territory: 'Central-East', RBM: 'Sarah Johnson', MFG_Quantity: 156, ParentDealerId: 'TOR100', ParentDealerName: 'Toromont Cat', Dealer_Id: 'TOR100-01', Mfg_Model: 'Model-C', Mfg_Product_Name: 'Product C', Product_Level2: 'Construction Equipment', SerialNumber: 'SN12347', Summary: 'Full Line Dealer', Segment: 'Construction', Latitude: 45.4215, Longitude: -75.6972 },
+            { ReportDate: '2024-01-15', Nation: 'Canada', State: 'BC', County: 'Vancouver', Territory: 'West Coast', RBM: 'Mike Chen', MFG_Quantity: 187, ParentDealerId: 'FIN200', ParentDealerName: 'Finning Canada', Dealer_Id: 'FIN200-01', Mfg_Model: 'Model-A', Mfg_Product_Name: 'Product A', Product_Level2: 'Heavy Equipment', SerialNumber: 'SN12348', Summary: 'Full Line Dealer', Segment: 'Mining', Latitude: 49.2827, Longitude: -123.1207 },
+            { ReportDate: '2024-01-15', Nation: 'Canada', State: 'BC', County: 'Surrey', Territory: 'West Coast', RBM: 'Mike Chen', MFG_Quantity: 134, ParentDealerId: 'FIN201', ParentDealerName: 'Finning Canada - Surrey', Dealer_Id: 'FIN201-01', Mfg_Model: 'Model-D', Mfg_Product_Name: 'Product D', Product_Level2: 'Heavy Equipment', SerialNumber: 'SN12349', Summary: 'Specialty Dealer', Segment: 'Construction', Latitude: 49.1913, Longitude: -122.8490 },
+            { ReportDate: '2024-01-15', Nation: 'Canada', State: 'BC', County: 'Langley', Territory: 'West Coast', RBM: 'Mike Chen', MFG_Quantity: 76, ParentDealerId: 'FIN202', ParentDealerName: 'Finning Canada - Langley', Dealer_Id: 'FIN202-01', Mfg_Model: 'Model-B', Mfg_Product_Name: 'Product B', Product_Level2: 'Compact Equipment', SerialNumber: 'SN12350', Summary: 'Specialty Dealer', Segment: 'Agriculture', Latitude: 49.1042, Longitude: -122.5621 },
+            { ReportDate: '2024-01-15', Nation: 'Canada', State: 'AB', County: 'Calgary', Territory: 'Prairies', RBM: 'David Martinez', MFG_Quantity: 203, ParentDealerId: 'FIN300', ParentDealerName: 'Finning Canada - Calgary', Dealer_Id: 'FIN300-01', Mfg_Model: 'Model-A', Mfg_Product_Name: 'Product A', Product_Level2: 'Heavy Equipment', SerialNumber: 'SN12351', Summary: 'Full Line Dealer', Segment: 'Mining', Latitude: 51.0447, Longitude: -114.0719 },
+            { ReportDate: '2024-01-15', Nation: 'Canada', State: 'AB', County: 'Edmonton', Territory: 'Prairies', RBM: 'David Martinez', MFG_Quantity: 145, ParentDealerId: 'BRA100', ParentDealerName: 'Brandt Tractor', Dealer_Id: 'BRA100-01', Mfg_Model: 'Model-C', Mfg_Product_Name: 'Product C', Product_Level2: 'Construction Equipment', SerialNumber: 'SN12352', Summary: 'Specialty Dealer', Segment: 'Construction', Latitude: 53.5461, Longitude: -113.4938 },
+            { ReportDate: '2024-01-15', Nation: 'Canada', State: 'AB', County: 'Red Deer', Territory: 'Prairies', RBM: 'David Martinez', MFG_Quantity: 67, ParentDealerId: 'WJX300', ParentDealerName: 'Wajax Limited - Red Deer', Dealer_Id: 'WJX300-01', Mfg_Model: 'Model-B', Mfg_Product_Name: 'Product B', Product_Level2: 'Compact Equipment', SerialNumber: 'SN12353', Summary: 'Full Line Dealer', Segment: 'Agriculture', Latitude: 52.2681, Longitude: -113.8117 },
+            { ReportDate: '2024-01-15', Nation: 'Canada', State: 'QC', County: 'Montreal', Territory: 'Quebec', RBM: 'Jean Leblanc', MFG_Quantity: 178, ParentDealerId: 'HEW100', ParentDealerName: 'Hewitt Equipment', Dealer_Id: 'HEW100-01', Mfg_Model: 'Model-A', Mfg_Product_Name: 'Product A', Product_Level2: 'Heavy Equipment', SerialNumber: 'SN12354', Summary: 'Full Line Dealer', Segment: 'Construction', Latitude: 45.5017, Longitude: -73.5673 },
+            { ReportDate: '2024-01-15', Nation: 'Canada', State: 'QC', County: 'Quebec', Territory: 'Quebec', RBM: 'Jean Leblanc', MFG_Quantity: 92, ParentDealerId: 'HEW101', ParentDealerName: 'Hewitt Equipment - Quebec City', Dealer_Id: 'HEW101-01', Mfg_Model: 'Model-C', Mfg_Product_Name: 'Product C', Product_Level2: 'Construction Equipment', SerialNumber: 'SN12355', Summary: 'Specialty Dealer', Segment: 'Construction', Latitude: 46.8139, Longitude: -71.2080 },
+            { ReportDate: '2024-01-15', Nation: 'Canada', State: 'QC', County: 'Laval', Territory: 'Quebec', RBM: 'Jean Leblanc', MFG_Quantity: 143, ParentDealerId: 'STR100', ParentDealerName: 'Strongco', Dealer_Id: 'STR100-01', Mfg_Model: 'Model-A', Mfg_Product_Name: 'Product A', Product_Level2: 'Heavy Equipment', SerialNumber: 'SN12356', Summary: 'Full Line Dealer', Segment: 'Mining', Latitude: 45.6066, Longitude: -73.7124 },
+            { ReportDate: '2024-01-15', Nation: 'Canada', State: 'MB', County: 'Winnipeg', Territory: 'Central', RBM: 'Tom Anderson', MFG_Quantity: 114, ParentDealerId: 'CER100', ParentDealerName: 'Cervus Equipment', Dealer_Id: 'CER100-01', Mfg_Model: 'Model-B', Mfg_Product_Name: 'Product B', Product_Level2: 'Agriculture Equipment', SerialNumber: 'SN12357', Summary: 'Full Line Dealer', Segment: 'Agriculture', Latitude: 49.8951, Longitude: -97.1384 },
+            { ReportDate: '2024-01-15', Nation: 'Canada', State: 'MB', County: 'Brandon', Territory: 'Central', RBM: 'Tom Anderson', MFG_Quantity: 58, ParentDealerId: 'CER101', ParentDealerName: 'Cervus Equipment - Brandon', Dealer_Id: 'CER101-01', Mfg_Model: 'Model-C', Mfg_Product_Name: 'Product C', Product_Level2: 'Compact Equipment', SerialNumber: 'SN12358', Summary: 'Specialty Dealer', Segment: 'Agriculture', Latitude: 49.8483, Longitude: -99.9501 },
+            { ReportDate: '2024-01-15', Nation: 'Canada', State: 'NS', County: 'Halifax', Territory: 'Atlantic', RBM: 'Robert MacLeod', MFG_Quantity: 89, ParentDealerId: 'ATL100', ParentDealerName: 'Atlantic Tractor', Dealer_Id: 'ATL100-01', Mfg_Model: 'Model-A', Mfg_Product_Name: 'Product A', Product_Level2: 'Construction Equipment', SerialNumber: 'SN12359', Summary: 'Full Line Dealer', Segment: 'Construction', Latitude: 44.6488, Longitude: -63.5752 },
+            { ReportDate: '2024-01-15', Nation: 'Canada', State: 'NS', County: 'Cape Breton', Territory: 'Atlantic', RBM: 'Robert MacLeod', MFG_Quantity: 45, ParentDealerId: 'ATL101', ParentDealerName: 'Atlantic Cat', Dealer_Id: 'ATL101-01', Mfg_Model: 'Model-D', Mfg_Product_Name: 'Product D', Product_Level2: 'Compact Equipment', SerialNumber: 'SN12360', Summary: 'Specialty Dealer', Segment: 'Forestry', Latitude: 46.1351, Longitude: -60.1831 },
+            { ReportDate: '2024-01-15', Nation: 'Canada', State: 'NB', County: 'Moncton', Territory: 'Atlantic', RBM: 'Emily Fraser', MFG_Quantity: 72, ParentDealerId: 'TOR200', ParentDealerName: 'Toromont Cat - Moncton', Dealer_Id: 'TOR200-01', Mfg_Model: 'Model-B', Mfg_Product_Name: 'Product B', Product_Level2: 'Construction Equipment', SerialNumber: 'SN12361', Summary: 'Full Line Dealer', Segment: 'Construction', Latitude: 46.0878, Longitude: -64.7782 },
+            { ReportDate: '2024-01-15', Nation: 'Canada', State: 'NL', County: 'St. John\'s', Territory: 'Atlantic', RBM: 'Robert MacLeod', MFG_Quantity: 81, ParentDealerId: 'ATL200', ParentDealerName: 'Atlantic Tractor - St. John\'s', Dealer_Id: 'ATL200-01', Mfg_Model: 'Model-C', Mfg_Product_Name: 'Product C', Product_Level2: 'Heavy Equipment', SerialNumber: 'SN12362', Summary: 'Full Line Dealer', Segment: 'Mining', Latitude: 47.5615, Longitude: -52.7126 }
+        ];
+    }
+
+    // ====== AGGREGATE DATA BY DEALER LOCATION ======
+    function aggregateDataByDealer(data) {
+        const dealerMap = new Map();
+        
+        data.forEach(record => {
+            const key = `${record.ParentDealerId}_${record.Latitude}_${record.Longitude}`;
+            
+            if (dealerMap.has(key)) {
+                // Aggregate quantities for same location
+                const existing = dealerMap.get(key);
+                existing.MFG_Quantity += record.MFG_Quantity;
+                existing.recordCount += 1;
+            } else {
+                // New dealer location
+                dealerMap.set(key, {
+                    ...record,
+                    recordCount: 1
+                });
+            }
+        });
+        
+        return Array.from(dealerMap.values());
+    }
+
+    // ====== INITIALIZE APPLICATION ======
+    async function initializeApp() {
+        try {
+            // Fetch raw data
+            const rawData = await fetchAEMDataFromSynapse();
+            
+            if (!rawData || rawData.length === 0) {
+                throw new Error('No AEM data received');
+            }
+
+            console.log(`Loaded ${rawData.length} AEM records`);
+
+            // Aggregate by dealer location
+            dealerData = aggregateDataByDealer(rawData);
+            console.log(`Aggregated to ${dealerData.length} dealer locations`);
+
+            // Extract unique values for filters
+            dealerData.forEach(dealer => {
+                if (dealer.Nation) allNations.add(dealer.Nation);
+                if (dealer.State) allStates.add(dealer.State);
+                if (dealer.County) allCounties.add(dealer.County);
+                if (dealer.Territory) allTerritories.add(dealer.Territory);
+                if (dealer.RBM) allRBMs.add(dealer.RBM);
+                if (dealer.Segment) allSegments.add(dealer.Segment);
+                if (dealer.Product_Level2) allProducts.add(dealer.Product_Level2);
+            });
+
+            // Populate filter dropdowns
+            populateFilters();
+
+            // Hide loading overlay
+            document.getElementById('loadingOverlay').classList.add('hidden');
+
+        } catch (error) {
+            console.error('Initialization error:', error);
+            document.getElementById('loadingOverlay').innerHTML = 
+                `<div class="error-message">
+                    <strong>Error loading AEM data:</strong> ${error.message}<br><br>
+                    Using sample data for demonstration. Please configure your Synapse connection.
+                </div>`;
+        }
+    }
+
+    // ====== POPULATE FILTER DROPDOWNS ======
+    function populateFilters() {
+        populateDropdown('nationFilter', allNations);
+        populateDropdown('stateFilter', allStates);
+        populateDropdown('countyFilter', allCounties);
+        populateDropdown('territoryFilter', allTerritories);
+        populateDropdown('rbmFilter', allRBMs);
+        populateDropdown('segmentFilter', allSegments);
+        populateDropdown('productFilter', allProducts);
+    }
+
+    function populateDropdown(elementId, valueSet) {
+        const select = document.getElementById(elementId);
+        const currentValue = select.value;
+        
+        // Keep first option (All)
+        const firstOption = select.options[0];
+        select.innerHTML = '';
+        select.appendChild(firstOption);
+        
+        // Add sorted options
+        [...valueSet].sort().forEach(value => {
+            const opt = document.createElement('option');
+            opt.value = value;
+            opt.textContent = value;
+            if (value === currentValue) {
+                opt.selected = true;
+            }
+            select.appendChild(opt);
+        });
+    }
+
+    // ====== SETUP MAP LAYERS ======
+    map.events.add('ready', async function () {
+        // Initialize app and load data
+        await initializeApp();
+
+        // Create data source
+        dealerSource = new atlas.source.DataSource();
+        map.sources.add(dealerSource);
+
+        // HEAT MAP LAYER - FIXED: Azure Maps doesn't support data expressions in heat maps
+        // We'll use a simpler configuration
+        heatLayer = new atlas.layer.HeatMapLayer(dealerSource, null, {
+            radius: 30,
+            opacity: 0.8,
+            intensity: 0.6,
+            // Simple color gradient (no data expressions)
+            color: [
+                'interpolate',
+                ['linear'],
+                ['heatmap-density'],
+                0, 'rgba(255, 255, 255, 0)',
+                0.2, 'rgba(255, 220, 220, 0.6)',
+                0.4, 'rgba(255, 180, 180, 0.75)',
+                0.6, 'rgba(220, 100, 100, 0.85)',
+                0.8, 'rgba(180, 50, 50, 0.95)',
+                1, 'rgba(139, 0, 0, 1)'
+            ]
+        });
+        map.layers.add(heatLayer, 'labels');
+
+        // DEALER PIN LAYER (middle layer)
+        dealerLayer = new atlas.layer.SymbolLayer(dealerSource, null, {
+            iconOptions: { 
+                image: 'marker-blue',
+                anchor: 'bottom',
+                size: 0.8,
+                allowOverlap: true
+            },
+            textOptions: { 
+                textField: '', // Hidden by default
+                offset: [0, -1.5],
+                size: 10,
+                color: '#000000',
+                haloColor: '#ffffff',
+                haloWidth: 2,
+                allowOverlap: false
+            }
+        });
+        map.layers.add(dealerLayer);
+
+        // LABEL LAYER (top layer, hidden by default)
+        labelLayer = new atlas.layer.SymbolLayer(dealerSource, 'labelLayer', {
+            iconOptions: { 
+                image: 'none'
+            },
+            textOptions: { 
+                textField: ['get', 'ParentDealerName'],
+                offset: [0, 1.5],
+                size: 11,
+                color: '#000000',
+                haloColor: '#ffffff',
+                haloWidth: 2,
+                allowOverlap: false
+            }
+        });
+        map.layers.add(labelLayer);
+        labelLayer.setOptions({ visible: false });
+
+        // Create popup
+        popup = new atlas.Popup({ 
+            pixelOffset: [0, -30],
+            closeButton: true
+        });
+
+        // Popup on click
+        map.events.add('click', dealerLayer, function(e) {
+            if (e.shapes && e.shapes.length > 0) {
+                const props = e.shapes[0].getProperties();
+                showDealerPopup(props);
+            }
+        });
+
+        // Change cursor on hover
+        map.events.add('mouseover', dealerLayer, function() {
+            map.getCanvasContainer().style.cursor = 'pointer';
+        });
+
+        map.events.add('mouseout', dealerLayer, function() {
+            map.getCanvasContainer().style.cursor = 'grab';
+        });
+
+        // Load dealer points
+        loadDealersToMap();
+
+        // Initialize displays
+        updateRBMList();
+        updateStatistics();
+    });
+
+    // ====== SHOW DEALER POPUP ======
+    function showDealerPopup(props) {
+        popup.setOptions({
+            position: [props.Longitude, props.Latitude],
+            content: `
+                <div class="popup-content">
+                    <h3>${props.ParentDealerName}</h3>
+                    <div class="popup-row">
+                        <span class="popup-label">Dealer ID:</span>
+                        <span class="popup-value">${props.ParentDealerId}</span>
+                    </div>
+                    <div class="popup-row">
+                        <span class="popup-label">Location:</span>
+                        <span class="popup-value">${props.County}, ${props.State}</span>
+                    </div>
+                    <div class="popup-row">
+                        <span class="popup-label">Territory:</span>
+                        <span class="popup-value">${props.Territory}</span>
+                    </div>
+                    <div class="popup-row">
+                        <span class="popup-label">RBM:</span>
+                        <span class="popup-value">${props.RBM}</span>
+                    </div>
+                    <div class="popup-row">
+                        <span class="popup-label">Total Quantity:</span>
+                        <span class="popup-value"><strong>${props.Total_MFG_Quantity || props.MFG_Quantity || 'N/A'}</strong> units</span>
+                    </div>
+                    <div class="popup-row">
+                        <span class="popup-label">Segment:</span>
+                        <span class="popup-value">${props.Segment}</span>
+                    </div>
+                    <div class="popup-row">
+                        <span class="popup-label">Product:</span>
+                        <span class="popup-value">${props.Product_Level2}</span>
+                    </div>
+                    <div class="popup-row">
+                        <span class="popup-label">Type:</span>
+                        <span class="popup-value">${props.Summary}</span>
+                    </div>
+                </div>
+            `
+        });
+        popup.open(map);
+    }
+
+    // ====== LOAD DEALERS TO MAP ======
+    function loadDealersToMap() {
+        dealerSource.clear();
+        
+        dealerData.forEach(d => {
+            if (d.Latitude && d.Longitude) {
+                dealerSource.add(new atlas.data.Feature(
+                    new atlas.data.Point([d.Longitude, d.Latitude]), 
+                    d
+                ));
+            }
+        });
+    }
+
+    // ====== APPLY FILTERS ======
+    function applyFilters() {
+        const nation = document.getElementById('nationFilter').value;
+        const state = document.getElementById('stateFilter').value;
+        const county = document.getElementById('countyFilter').value;
+        const territory = document.getElementById('territoryFilter').value;
+        const rbm = document.getElementById('rbmFilter').value;
+        const segment = document.getElementById('segmentFilter').value;
+        const product = document.getElementById('productFilter').value;
+
+        // Update county filter based on state
+        if (state) {
+            const countiesInState = new Set();
+            dealerData
+                .filter(d => d.State === state)
+                .forEach(d => {
+                    if (d.County) countiesInState.add(d.County);
+                });
+            populateDropdown('countyFilter', countiesInState);
+        } else {
+            populateDropdown('countyFilter', allCounties);
+        }
+
+        // Build filter expression
+        const filterConditions = ['all'];
+        
+        if (nation) filterConditions.push(['==', ['get', 'Nation'], nation]);
+        if (state) filterConditions.push(['==', ['get', 'State'], state]);
+        if (county) filterConditions.push(['==', ['get', 'County'], county]);
+        if (territory) filterConditions.push(['==', ['get', 'Territory'], territory]);
+        if (rbm) filterConditions.push(['==', ['get', 'RBM'], rbm]);
+        if (segment) filterConditions.push(['==', ['get', 'Segment'], segment]);
+        if (product) filterConditions.push(['==', ['get', 'Product_Level2'], product]);
+
+        // Apply filter to all layers
+        dealerLayer.setOptions({ filter: filterConditions });
+        heatLayer.setOptions({ filter: filterConditions });
+        labelLayer.setOptions({ filter: filterConditions });
+
+        // Update displays
+        updateRBMList();
+        updateStatistics();
+
+        // Auto-zoom to filtered dealers
+        zoomToFilteredDealers(nation, state, county, territory, rbm, segment, product);
+    }
+
+    // ====== UPDATE RBM LIST ======
+    function updateRBMList() {
+        const filtered = getFilteredDealers();
+        const rbms = [...new Set(filtered.map(d => d.RBM))].sort();
+        const rbmListEl = document.getElementById('rbmList');
+        
+        rbmListEl.innerHTML = '';
+        
+        if (rbms.length === 0) {
+            const li = document.createElement('li');
+            li.textContent = 'No RBMs in filter';
+            li.style.fontStyle = 'italic';
+            li.style.color = '#999';
+            rbmListEl.appendChild(li);
+        } else {
+            rbms.forEach(rbm => {
+                const dealerCount = filtered.filter(d => d.RBM === rbm).length;
+                const totalQty = filtered
+                    .filter(d => d.RBM === rbm)
+                    .reduce((sum, d) => sum + (d.Total_MFG_Quantity || d.MFG_Quantity || 0), 0);
+                
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${rbm}</strong><br>
+                    <small>${dealerCount} dealers • ${totalQty} units</small>`;
+                rbmListEl.appendChild(li);
+            });
+        }
+    }
+
+    // ====== UPDATE STATISTICS ======
+    function updateStatistics() {
+        const filtered = getFilteredDealers();
+        
+        const totalDealers = filtered.length;
+        // Handle both field names (Total_MFG_Quantity from API or MFG_Quantity from sample data)
+        const totalQuantity = filtered.reduce((sum, d) => sum + (d.Total_MFG_Quantity || d.MFG_Quantity || 0), 0);
+        
+        document.getElementById('totalDealers').textContent = totalDealers;
+        document.getElementById('totalQuantity').textContent = totalQuantity.toLocaleString();
+    }
+
+    // ====== GET FILTERED DEALERS ======
+    function getFilteredDealers() {
+        const nation = document.getElementById('nationFilter').value;
+        const state = document.getElementById('stateFilter').value;
+        const county = document.getElementById('countyFilter').value;
+        const territory = document.getElementById('territoryFilter').value;
+        const rbm = document.getElementById('rbmFilter').value;
+        const segment = document.getElementById('segmentFilter').value;
+        const product = document.getElementById('productFilter').value;
+
+        return dealerData.filter(d =>
+            (!nation || d.Nation === nation) &&
+            (!state || d.State === state) &&
+            (!county || d.County === county) &&
+            (!territory || d.Territory === territory) &&
+            (!rbm || d.RBM === rbm) &&
+            (!segment || d.Segment === segment) &&
+            (!product || d.Product_Level2 === product)
+        );
+    }
+
+    // ====== ZOOM TO FILTERED DEALERS ======
+    function zoomToFilteredDealers(nation, state, county, territory, rbm, segment, product) {
+        const filtered = getFilteredDealers();
+
+        if (filtered.length === 0) return;
+
+        if (filtered.length === 1) {
+            map.setCamera({
+                center: [filtered[0].Longitude, filtered[0].Latitude],
+                zoom: 10,
+                type: 'ease',
+                duration: 1000
+            });
+        } else {
+            const positions = filtered.map(d => [d.Longitude, d.Latitude]);
+            const bounds = atlas.data.BoundingBox.fromPositions(positions);
+            map.setCamera({
+                bounds: bounds,
+                padding: 80,
+                type: 'ease',
+                duration: 1000
+            });
+        }
+    }
+
+    // ====== TOGGLE LAYERS ======
+    function toggleLayer(layerType) {
+        switch(layerType) {
+            case 'pins':
+                const pinsEnabled = document.getElementById('togglePins').checked;
+                dealerLayer.setOptions({ visible: pinsEnabled });
+                break;
+            case 'heat':
+                const heatEnabled = document.getElementById('toggleHeat').checked;
+                heatLayer.setOptions({ visible: heatEnabled });
+                break;
+            case 'labels':
+                const labelsEnabled = document.getElementById('toggleLabels').checked;
+                labelLayer.setOptions({ visible: labelsEnabled });
+                break;
+        }
+    }
+</script>
+
+</body>
+</html>
