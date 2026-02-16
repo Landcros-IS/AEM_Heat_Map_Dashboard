@@ -425,7 +425,7 @@
     // ====== CONFIGURATION ======
     const SYNAPSE_CONFIG = {
         // Replace with your actual API endpoint that queries Synapse
-        apiEndpoint: 'https://aem-heat-map-api.azurewebsites.net',
+        apiEndpoint: 'https://aem-heat-map-api.azurewebsites.net/api/getAEMData',
 
 
         // Or use the backend_api.py we created earlier
@@ -497,13 +497,10 @@
     async function fetchAEMDataFromSynapse() {
         try {
             const response = await fetch(SYNAPSE_CONFIG.apiEndpoint, {
-                method: 'POST',
+                method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    query: SYNAPSE_CONFIG.query
-                })
             });
 
             if (!response.ok) {
