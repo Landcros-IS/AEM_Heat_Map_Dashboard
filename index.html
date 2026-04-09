@@ -6,18 +6,8 @@
 <title>AEM Dealer Sales Heat Map & Pin Dashboard</title>
 <link rel="stylesheet" href="https://atlas.microsoft.com/sdk/javascript/mapcontrol/2/atlas.min.css" type="text/css">
 <style>
-    html, body {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    .container {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-    }
+    html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .container { display: flex; flex-direction: column; height: 100%; }
 
     .filter-panel {
         padding: 4px 10px;
@@ -31,46 +21,11 @@
     }
 
     .filter-group { min-width: 120px; }
+    .filter-group label { display: block; margin-bottom: 2px; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .filter-group select { width: 100%; padding: 4px 6px; border: none; border-radius: 5px; font-size: 12px; background: white; cursor: pointer; }
 
-    .filter-group label {
-        display: block;
-        margin-bottom: 2px;
-        font-weight: 600;
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-    }
-
-    .filter-group select {
-        width: 100%;
-        padding: 4px 6px;
-        border: none;
-        border-radius: 5px;
-        font-size: 12px;
-        background: white;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .filter-group select:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
-    .filter-group select:focus { outline: 3px solid rgba(255,255,255,0.5); }
-
-    .info-panel {
-        background: white;
-        padding: 6px 10px;
-        border-radius: 6px;
-        min-width: 130px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-
-    .info-panel h4 {
-        margin: 0 0 4px 0;
-        color: #667eea;
-        font-size: 10px;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-    }
-
+    .info-panel { background: white; padding: 6px 10px; border-radius: 6px; min-width: 130px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .info-panel h4 { margin: 0 0 4px 0; color: #667eea; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; }
     #rbmList { list-style: none; padding: 0; margin: 0; max-height: 60px; overflow-y: auto; }
     #rbmList li { padding: 2px 0; font-size: 11px; color: #333; border-bottom: 1px solid #eee; }
     #rbmList li:last-child { border-bottom: none; }
@@ -82,187 +37,41 @@
 
     #myMap { flex: 1; width: 100%; position: relative; }
 
-    /* ===== ZOOM CONTROLS ===== */
-    .zoom-controls {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        z-index: 10;
-    }
-
-    .zoom-btn {
-        width: 38px;
-        height: 38px;
-        background: white;
-        border: none;
-        border-radius: 6px;
-        font-size: 20px;
-        font-weight: bold;
-        color: #444;
-        cursor: pointer;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.15s ease;
-        line-height: 1;
-    }
-
-    .zoom-btn:hover { background: #667eea; color: white; transform: scale(1.08); box-shadow: 0 4px 12px rgba(102,126,234,0.4); }
-    .zoom-btn:active { transform: scale(0.97); }
+    .zoom-controls { position: absolute; top: 20px; left: 20px; display: flex; flex-direction: column; gap: 6px; z-index: 10; }
+    .zoom-btn { width: 38px; height: 38px; background: white; border: none; border-radius: 6px; font-size: 20px; font-weight: bold; color: #444; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; transition: all 0.15s ease; line-height: 1; }
+    .zoom-btn:hover { background: #667eea; color: white; transform: scale(1.08); }
     .zoom-btn.reset { font-size: 13px; font-weight: 600; }
     .zoom-divider { width: 38px; height: 1px; background: #ddd; margin: 2px 0; }
+    .zoom-level-display { width: 38px; height: 24px; background: rgba(255,255,255,0.9); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #555; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
 
-    .zoom-level-display {
-        width: 38px;
-        height: 24px;
-        background: rgba(255,255,255,0.9);
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 11px;
-        font-weight: 600;
-        color: #555;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-    }
-
-    /* ===== MAP STYLE SWITCHER ===== */
-    .style-switcher {
-        position: absolute;
-        top: 20px;
-        left: 70px;
-        background: white;
-        padding: 10px 12px;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        z-index: 10;
-    }
-
-    .style-switcher label {
-        font-size: 11px;
-        font-weight: 700;
-        color: #667eea;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        display: block;
-        margin-bottom: 6px;
-    }
-
+    .style-switcher { position: absolute; top: 20px; left: 70px; background: white; padding: 10px 12px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 10; }
+    .style-switcher label { font-size: 11px; font-weight: 700; color: #667eea; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px; }
     .style-btn-group { display: flex; gap: 5px; }
-
-    .style-btn {
-        padding: 5px 10px;
-        border: 1.5px solid #ddd;
-        border-radius: 5px;
-        background: white;
-        font-size: 12px;
-        cursor: pointer;
-        color: #555;
-        transition: all 0.15s ease;
-        white-space: nowrap;
-    }
-
+    .style-btn { padding: 5px 10px; border: 1.5px solid #ddd; border-radius: 5px; background: white; font-size: 12px; cursor: pointer; color: #555; transition: all 0.15s ease; white-space: nowrap; }
     .style-btn:hover { border-color: #667eea; color: #667eea; }
     .style-btn.active { background: #667eea; border-color: #667eea; color: white; font-weight: 600; }
 
-    /* ===== LAYER CONTROLS ===== */
-    .map-controls {
-        position: absolute;
-        bottom: 195px;
-        left: 20px;
-        background: white;
-        padding: 8px 10px;
-        border-radius: 7px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        z-index: 10;
-        min-width: 155px;
-    }
-
-    .map-controls h4 {
-        margin: 0 0 6px 0;
-        font-size: 10px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-        color: #667eea;
-    }
-
+    .map-controls { position: absolute; bottom: 195px; left: 20px; background: white; padding: 8px 10px; border-radius: 7px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 10; min-width: 155px; }
+    .map-controls h4 { margin: 0 0 6px 0; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #667eea; }
     .toggle-group { display: flex; flex-direction: column; gap: 4px; }
     .toggle-item { display: flex; align-items: center; gap: 6px; }
     .toggle-item input[type="checkbox"] { width: 13px; height: 13px; cursor: pointer; }
     .toggle-item label { font-size: 11px; cursor: pointer; user-select: none; color: #333; }
 
-    /* ===== LEGEND ===== */
-    .map-legend {
-        position: absolute;
-        bottom: 20px;
-        left: 20px;
-        background: white;
-        padding: 8px 10px;
-        border-radius: 7px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        z-index: 10;
-        min-width: 170px;
-    }
-
-    .map-legend h4 {
-        margin: 0 0 5px 0;
-        font-size: 10px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-        color: #667eea;
-    }
-
+    .map-legend { position: absolute; bottom: 20px; left: 20px; background: white; padding: 8px 10px; border-radius: 7px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 10; min-width: 170px; }
+    .map-legend h4 { margin: 0 0 5px 0; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #667eea; }
     .legend-item { display: flex; align-items: center; margin: 3px 0; font-size: 10px; color: #444; }
-    .legend-color { width: 20px; height: 10px; margin-right: 7px; border-radius: 2px; flex-shrink: 0; }
     .legend-dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 7px; flex-shrink: 0; }
     .legend-divider { border: none; border-top: 1px solid #eee; margin: 5px 0; }
+    .legend-ramp { display: flex; align-items: center; gap: 3px; margin-bottom: 4px; }
+    .ramp-swatch { width: 18px; height: 10px; border-radius: 2px; flex-shrink: 0; }
 
-    /* County ramp swatch */
-    .legend-ramp {
-        display: flex;
-        align-items: center;
-        gap: 3px;
-        margin-bottom: 4px;
-    }
-    .ramp-swatch {
-        width: 18px;
-        height: 10px;
-        border-radius: 2px;
-        flex-shrink: 0;
-    }
-
-    /* ===== LOADING ===== */
-    .loading-overlay {
-        position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(255, 255, 255, 0.95);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-    }
-
-    .loading-spinner {
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #667eea;
-        border-radius: 50%;
-        width: 50px; height: 50px;
-        animation: spin 1s linear infinite;
-    }
-
+    .loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
+    .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
     @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
-
     .loading-text { margin-top: 20px; font-size: 18px; color: #667eea; font-weight: 600; }
     .hidden { display: none; }
 
-    /* ===== POPUP ===== */
     .popup-content { font-size: 13px; padding: 5px; max-width: 290px; }
     .popup-content h3 { margin: 0 0 8px 0; color: #667eea; font-size: 15px; border-bottom: 2px solid #667eea; padding-bottom: 4px; }
     .popup-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #eee; gap: 10px; }
@@ -272,74 +81,41 @@
 </style>
 </head>
 <body>
-
 <div class="container">
 
-    <!-- ===== FILTER PANEL ===== -->
+    <!-- FILTER PANEL -->
     <div class="filter-panel">
-        <div class="filter-group">
-            <label>Nation</label>
-            <select id="nationFilter" onchange="applyFilters()"><option value="">All Nations</option></select>
-        </div>
-        <div class="filter-group">
-            <label>State / Region</label>
-            <select id="stateFilter" onchange="applyFilters()"><option value="">All States</option></select>
-        </div>
-        <div class="filter-group">
-            <label>County</label>
-            <select id="countyFilter" onchange="applyFilters()"><option value="">All Counties</option></select>
-        </div>
-        <div class="filter-group">
-            <label>Territory</label>
-            <select id="territoryFilter" onchange="applyFilters()"><option value="">All Territories</option></select>
-        </div>
-        <div class="filter-group">
-            <label>RBM</label>
-            <select id="rbmFilter" onchange="applyFilters()"><option value="">All RBMs</option></select>
-        </div>
-        <div class="filter-group">
-            <label>Segment</label>
-            <select id="segmentFilter" onchange="applyFilters()"><option value="">All Segments</option></select>
-        </div>
-        <div class="filter-group">
-            <label>Product Level</label>
-            <select id="productFilter" onchange="applyFilters()"><option value="">All Products</option></select>
-        </div>
-
+        <div class="filter-group"><label>Nation</label><select id="nationFilter" onchange="applyFilters()"><option value="">All Nations</option></select></div>
+        <div class="filter-group"><label>State / Region</label><select id="stateFilter" onchange="applyFilters()"><option value="">All States</option></select></div>
+        <div class="filter-group"><label>County</label><select id="countyFilter" onchange="applyFilters()"><option value="">All Counties</option></select></div>
+        <div class="filter-group"><label>Territory</label><select id="territoryFilter" onchange="applyFilters()"><option value="">All Territories</option></select></div>
+        <div class="filter-group"><label>RBM</label><select id="rbmFilter" onchange="applyFilters()"><option value="">All RBMs</option></select></div>
+        <div class="filter-group"><label>Segment</label><select id="segmentFilter" onchange="applyFilters()"><option value="">All Segments</option></select></div>
+        <div class="filter-group"><label>Product Level</label><select id="productFilter" onchange="applyFilters()"><option value="">All Products</option></select></div>
         <div class="info-panel">
             <h4>Dashboard Stats</h4>
             <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-value" id="totalDealers">0</div>
-                    <div class="stat-label">Dealers</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="totalQuantity">0</div>
-                    <div class="stat-label">Units</div>
-                </div>
+                <div class="stat-item"><div class="stat-value" id="totalDealers">0</div><div class="stat-label">Dealers</div></div>
+                <div class="stat-item"><div class="stat-value" id="totalQuantity">0</div><div class="stat-label">Units</div></div>
             </div>
         </div>
-
         <div class="info-panel">
             <h4>Active RBMs</h4>
             <ul id="rbmList"></ul>
         </div>
     </div>
 
-    <!-- ===== MAP ===== -->
+    <!-- MAP -->
     <div id="myMap">
-
-        <!-- Zoom Controls -->
         <div class="zoom-controls">
-            <button class="zoom-btn" onclick="zoomIn()" title="Zoom In">+</button>
-            <button class="zoom-btn" onclick="zoomOut()" title="Zoom Out">−</button>
+            <button class="zoom-btn" onclick="zoomIn()">+</button>
+            <button class="zoom-btn" onclick="zoomOut()">−</button>
             <div class="zoom-divider"></div>
             <div class="zoom-level-display" id="zoomDisplay">3.2</div>
             <div class="zoom-divider"></div>
-            <button class="zoom-btn reset" onclick="resetView()" title="Reset to North America view">⌂</button>
+            <button class="zoom-btn reset" onclick="resetView()">⌂</button>
         </div>
 
-        <!-- Style Switcher -->
         <div class="style-switcher">
             <label>Map Style</label>
             <div class="style-btn-group">
@@ -349,26 +125,15 @@
             </div>
         </div>
 
-        <!-- Layer Controls -->
         <div class="map-controls">
             <h4>Map Layers</h4>
             <div class="toggle-group">
-                <div class="toggle-item">
-                    <input type="checkbox" id="toggleCounty" checked onchange="toggleLayer('county')">
-                    <label for="toggleCounty">County Choropleth</label>
-                </div>
-                <div class="toggle-item">
-                    <input type="checkbox" id="togglePins" checked onchange="toggleLayer('pins')">
-                    <label for="togglePins">Dealer Pins</label>
-                </div>
-                <div class="toggle-item">
-                    <input type="checkbox" id="toggleLabels" onchange="toggleLayer('labels')">
-                    <label for="toggleLabels">Dealer Labels</label>
-                </div>
+                <div class="toggle-item"><input type="checkbox" id="toggleCounty" checked onchange="toggleLayer('county')"><label for="toggleCounty">County Choropleth</label></div>
+                <div class="toggle-item"><input type="checkbox" id="togglePins" checked onchange="toggleLayer('pins')"><label for="togglePins">Dealer Pins</label></div>
+                <div class="toggle-item"><input type="checkbox" id="toggleLabels" onchange="toggleLayer('labels')"><label for="toggleLabels">Dealer Labels</label></div>
             </div>
         </div>
 
-        <!-- Legend -->
         <div class="map-legend">
             <h4>Legend</h4>
             <div style="font-size:10px;color:#888;margin-bottom:3px;">County Sales Intensity</div>
@@ -386,41 +151,55 @@
             </div>
         </div>
 
-        <!-- Loading Overlay -->
         <div id="loadingOverlay" class="loading-overlay">
             <div class="loading-spinner"></div>
             <div class="loading-text">Loading AEM data from Synapse...</div>
         </div>
-
-    </div><!-- end #myMap -->
-</div><!-- end .container -->
+    </div>
+</div>
 
 <script src="https://atlas.microsoft.com/sdk/javascript/mapcontrol/2/atlas.min.js"></script>
 <script>
 
-// ====== CONFIGURATION ======
-const SYNAPSE_CONFIG = {
-    apiEndpoint: 'https://aem-heat-map-api.azurewebsites.net/api/getAEMData'
-};
-
+const SYNAPSE_CONFIG = { apiEndpoint: 'https://aem-heat-map-api.azurewebsites.net/api/getAEMData' };
 const AZURE_MAPS_KEY = 'D2rj4Lkx4masQx5oO7bANUDBBDm8qLSgAAbH3jW7QdyRkS4CIbcpJQQJ99BEACYeBjFTRtVWAAAgAZMP4Mo0';
 
-// Centered on US + Canada
+// Default view: North America
 const DEFAULT_CENTER = [-96.5, 52.0];
 const DEFAULT_ZOOM   = 3.2;
-const MIN_ZOOM       = 3.0;
+const MIN_ZOOM       = 2.5;
 const MAX_ZOOM       = 18;
-// Hard pan boundary: contiguous US + Canada only
-const NA_BOUNDS      = [-168.0, 24.0, -52.0, 72.5];
 
-// ====== GLOBAL STATE ======
+// Hard geographic fence — covers all of North + South America.
+// Any coordinate outside this box is treated as invalid and skipped.
+const AMERICAS_LON_MIN = -170;
+const AMERICAS_LON_MAX =  -30;
+const AMERICAS_LAT_MIN =  -60;
+const AMERICAS_LAT_MAX =   75;
+
+// maxBounds keeps panning locked to North America
+const NA_BOUNDS = [-168.0, 24.0, -52.0, 72.5];
+
 let dealerData = [];
 let map, dealerSource, countySource;
 let countyFillLayer, countyLineLayer, dealerLayer, labelLayer, popup;
-let allNations = new Set(), allStates  = new Set(), allCounties    = new Set();
-let allTerritories = new Set(), allRBMs = new Set(), allSegments = new Set(), allProducts = new Set();
+let allNations=new Set(), allStates=new Set(), allCounties=new Set();
+let allTerritories=new Set(), allRBMs=new Set(), allSegments=new Set(), allProducts=new Set();
 
-// ====== MAP INIT ======
+// ── Validate that a coordinate is actually in the Americas ────────────────
+function isValidCoord(lat, lon) {
+    if (lat == null || lon == null) return false;
+    const la = parseFloat(lat);
+    const lo = parseFloat(lon);
+    if (isNaN(la) || isNaN(lo)) return false;
+    if (la === 0 && lo === 0)   return false;   // classic null-island sentinel
+    return (
+        lo >= AMERICAS_LON_MIN && lo <= AMERICAS_LON_MAX &&
+        la >= AMERICAS_LAT_MIN && la <= AMERICAS_LAT_MAX
+    );
+}
+
+// ── Map Init ──────────────────────────────────────────────────────────────
 map = new atlas.Map('myMap', {
     center: DEFAULT_CENTER,
     zoom:   DEFAULT_ZOOM,
@@ -429,56 +208,46 @@ map = new atlas.Map('myMap', {
     maxBounds: NA_BOUNDS,
     style: 'road',
     language: 'en-US',
-    authOptions: {
-        authType: 'subscriptionKey',
-        subscriptionKey: AZURE_MAPS_KEY
-    },
-    showZoomControl:  false,
-    showPitchControl: false,
-    showCompass:      false
+    authOptions: { authType: 'subscriptionKey', subscriptionKey: AZURE_MAPS_KEY },
+    showZoomControl: false, showPitchControl: false, showCompass: false
 });
 
-// ====== ZOOM ======
-function zoomIn()  { map.setCamera({ zoom: Math.min(map.getCamera().zoom + 1, MAX_ZOOM), type: 'ease', duration: 300 }); }
-function zoomOut() { map.setCamera({ zoom: Math.max(map.getCamera().zoom - 1, MIN_ZOOM), type: 'ease', duration: 300 }); }
-function resetView() { map.setCamera({ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM, type: 'ease', duration: 800 }); }
+function zoomIn()    { map.setCamera({ zoom: Math.min(map.getCamera().zoom+1, MAX_ZOOM), type:'ease', duration:300 }); }
+function zoomOut()   { map.setCamera({ zoom: Math.max(map.getCamera().zoom-1, MIN_ZOOM), type:'ease', duration:300 }); }
+function resetView() { map.setCamera({ center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM, type:'ease', duration:800 }); }
 
 map.events.add('moveend', () => {
     document.getElementById('zoomDisplay').textContent = map.getCamera().zoom.toFixed(1);
 });
 
 document.addEventListener('keydown', e => {
-    if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
-    if (e.key === '+' || e.key === '=') zoomIn();
-    if (e.key === '-' || e.key === '_') zoomOut();
-    if (e.key === '0') resetView();
+    if (e.target.tagName==='SELECT' || e.target.tagName==='INPUT') return;
+    if (e.key==='+' || e.key==='=') zoomIn();
+    if (e.key==='-' || e.key==='_') zoomOut();
+    if (e.key==='0') resetView();
 });
 
-// ====== MAP STYLE ======
 function setMapStyle(style) {
     map.setStyle({ style });
-    document.getElementById('btnStreet').classList.toggle('active',    style === 'road');
-    document.getElementById('btnSatellite').classList.toggle('active', style === 'satellite_road_labels');
-    document.getElementById('btnDark').classList.toggle('active',      style === 'night');
+    document.getElementById('btnStreet').classList.toggle('active',    style==='road');
+    document.getElementById('btnSatellite').classList.toggle('active', style==='satellite_road_labels');
+    document.getElementById('btnDark').classList.toggle('active',      style==='night');
 }
 
-// ====== FETCH DATA ======
+// ── Fetch ─────────────────────────────────────────────────────────────────
 async function fetchAEMData() {
     try {
-        const res = await fetch(SYNAPSE_CONFIG.apiEndpoint, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
-        });
+        const res = await fetch(SYNAPSE_CONFIG.apiEndpoint, { method:'GET', headers:{'Content-Type':'application/json'} });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
         return data.results || data;
-    } catch (err) {
-        console.warn('Using sample data:', err.message);
+    } catch(e) {
+        console.warn('Using sample data:', e.message);
         return getSampleData();
     }
 }
 
-// ====== SAMPLE DATA ======
+// ── Sample Data ───────────────────────────────────────────────────────────
 function getSampleData() {
     return [
         { Nation:'Canada', State:'ON', County:'Toronto',     Territory:'Central',      RBM:'Quoc Nguyen',    MFG_Quantity:125, ParentDealerId:'WJX200', ParentDealerName:'Wajax Limited',                  Segment:'Construction', Product_Level2:'Heavy Equipment',       Summary:'Full Line Dealer', Latitude:43.6532,  Longitude:-79.3832  },
@@ -502,51 +271,72 @@ function getSampleData() {
     ];
 }
 
-// ====== AGGREGATE BY DEALER ======
+// ── Aggregate ─────────────────────────────────────────────────────────────
 function aggregateByDealer(data) {
     const m = new Map();
     data.forEach(r => {
+        // Skip records with bad coordinates immediately at ingest
+        if (!isValidCoord(r.Latitude, r.Longitude)) return;
         const k = `${r.ParentDealerId}_${r.Latitude}_${r.Longitude}`;
-        if (m.has(k)) m.get(k).MFG_Quantity += r.MFG_Quantity;
-        else m.set(k, { ...r, recordCount: 1 });
+        if (m.has(k)) m.get(k).MFG_Quantity += (r.MFG_Quantity || 0);
+        else m.set(k, { ...r, MFG_Quantity: r.MFG_Quantity || 0, recordCount: 1 });
     });
     return Array.from(m.values());
 }
 
-// ====== BUILD COUNTY POLYGON FEATURES ======
-// Creates bounding-box squares around each county centroid, coloured by normalised sales
+// ── Colour helpers ────────────────────────────────────────────────────────
+function lerp(a, b, t) { return Math.round(a + (b-a) * Math.min(1, Math.max(0, t))); }
+
+function normToColor(norm) {
+    const stops = [
+        [0,    [253,232,232], 0.72],
+        [0.25, [244,160,160], 0.78],
+        [0.5,  [212, 90, 90], 0.84],
+        [0.75, [178, 34, 34], 0.90],
+        [1.0,  [139,  0,  0], 0.94]
+    ];
+    for (let i = 0; i < stops.length - 1; i++) {
+        const [t0, c0, a0] = stops[i];
+        const [t1, c1, a1] = stops[i+1];
+        if (norm <= t1) {
+            const t = (norm - t0) / (t1 - t0);
+            return `rgba(${lerp(c0[0],c1[0],t)},${lerp(c0[1],c1[1],t)},${lerp(c0[2],c1[2],t)},${(a0+(a1-a0)*t).toFixed(2)})`;
+        }
+    }
+    return 'rgba(139,0,0,0.94)';
+}
+
+// ── Build county polygon features ─────────────────────────────────────────
 function buildCountyFeatures(filtered) {
     const groups = {};
     filtered.forEach(r => {
         const k = `${r.State}|${r.County}`;
-        if (!groups[k]) groups[k] = { lat: r.Latitude, lon: r.Longitude, qty: 0, county: r.County, state: r.State };
+        if (!groups[k]) groups[k] = { lat: parseFloat(r.Latitude), lon: parseFloat(r.Longitude), qty: 0, county: r.County, state: r.State };
         groups[k].qty += (r.MFG_Quantity || 0);
     });
 
     const vals = Object.values(groups);
     const maxQty = Math.max(1, ...vals.map(c => c.qty));
-    const features = [];
 
-    vals.forEach(c => {
-        const norm = c.qty / maxQty;
-        const deg  = 0.38; // approximate half-width of a county in degrees
-        const box  = [
-            [c.lon - deg, c.lat - deg],
-            [c.lon + deg, c.lat - deg],
-            [c.lon + deg, c.lat + deg],
-            [c.lon - deg, c.lat + deg],
-            [c.lon - deg, c.lat - deg]
+    return vals.map(c => {
+        const norm  = c.qty / maxQty;
+        const color = normToColor(norm);
+        const deg   = 0.38;
+        const box   = [
+            [c.lon-deg, c.lat-deg],
+            [c.lon+deg, c.lat-deg],
+            [c.lon+deg, c.lat+deg],
+            [c.lon-deg, c.lat+deg],
+            [c.lon-deg, c.lat-deg]
         ];
-        features.push(new atlas.data.Feature(
+        return new atlas.data.Feature(
             new atlas.data.Polygon([box]),
-            { qty: c.qty, norm, county: c.county, state: c.state }
-        ));
+            { qty: c.qty, norm, county: c.county, state: c.state, fillColor: color }
+        );
     });
-
-    return features;
 }
 
-// ====== INIT APP ======
+// ── Init ──────────────────────────────────────────────────────────────────
 async function initializeApp() {
     try {
         const raw = await fetchAEMData();
@@ -566,15 +356,14 @@ async function initializeApp() {
 
         populateFilters();
         document.getElementById('loadingOverlay').classList.add('hidden');
-    } catch (e) {
+    } catch(e) {
         document.getElementById('loadingOverlay').innerHTML =
             `<div style="background:#fee;color:#c33;padding:15px;border-radius:8px;border:1px solid #fcc;margin:20px;">
-                <strong>Error loading AEM data:</strong> ${e.message}<br><br>Using sample data for demo.
+                <strong>Error:</strong> ${e.message}
             </div>`;
     }
 }
 
-// ====== POPULATE DROPDOWNS ======
 function populateFilters() {
     populateDD('nationFilter',    allNations);
     populateDD('stateFilter',     allStates);
@@ -588,10 +377,8 @@ function populateFilters() {
 
 function populateDD(id, set) {
     const sel = document.getElementById(id);
-    const cur = sel.value;
-    const first = sel.options[0];
-    sel.innerHTML = '';
-    sel.appendChild(first);
+    const cur = sel.value, first = sel.options[0];
+    sel.innerHTML = ''; sel.appendChild(first);
     [...set].sort().forEach(v => {
         const o = document.createElement('option');
         o.value = o.textContent = v;
@@ -600,38 +387,28 @@ function populateDD(id, set) {
     });
 }
 
-// ====== MAP READY ======
+// ── Map Ready ─────────────────────────────────────────────────────────────
 map.events.add('ready', async () => {
     await initializeApp();
 
-    // --- County choropleth source & layers ---
     countySource = new atlas.source.DataSource();
     map.sources.add(countySource);
 
     countyFillLayer = new atlas.layer.PolygonLayer(countySource, null, {
-        fillColor: [
-            'interpolate', ['linear'], ['get', 'norm'],
-            0,    'rgba(253,232,232,0.70)',
-            0.25, 'rgba(244,160,160,0.80)',
-            0.5,  'rgba(212,90,90,0.85)',
-            0.75, 'rgba(178,34,34,0.90)',
-            1,    'rgba(139,0,0,0.95)'
-        ],
+        fillColor: ['get', 'fillColor'],
         fillOpacity: 1
     });
     map.layers.add(countyFillLayer, 'labels');
 
     countyLineLayer = new atlas.layer.LineLayer(countySource, null, {
-        strokeColor: 'rgba(255,255,255,0.55)',
-        strokeWidth: 1
+        strokeColor: 'rgba(255,255,255,0.5)',
+        strokeWidth: 0.8
     });
     map.layers.add(countyLineLayer, 'labels');
 
-    // --- Dealer pin source & layers ---
     dealerSource = new atlas.source.DataSource();
     map.sources.add(dealerSource);
 
-    // Blue bubble pins
     dealerLayer = new atlas.layer.BubbleLayer(dealerSource, null, {
         radius: 8,
         color: '#1a73e8',
@@ -641,31 +418,23 @@ map.events.add('ready', async () => {
     });
     map.layers.add(dealerLayer);
 
-    // Label layer (off by default)
     labelLayer = new atlas.layer.SymbolLayer(dealerSource, 'labelLayer', {
         iconOptions: { image: 'none' },
         textOptions: {
             textField: ['get', 'ParentDealerName'],
-            offset: [0, 1.5],
-            size: 11,
-            color: '#000000',
-            haloColor: '#ffffff',
-            haloWidth: 2,
-            allowOverlap: false
+            offset: [0, 1.5], size: 11,
+            color: '#000000', haloColor: '#ffffff', haloWidth: 2, allowOverlap: false
         }
     });
     map.layers.add(labelLayer);
     labelLayer.setOptions({ visible: false });
 
-    // Popup
     popup = new atlas.Popup({ pixelOffset: [0, -12], closeButton: true });
 
-    // Click dealer pin
     map.events.add('click', dealerLayer, e => {
         if (e.shapes && e.shapes.length > 0) showDealerPopup(e.shapes[0].getProperties());
     });
 
-    // Click county fill
     map.events.add('click', countyFillLayer, e => {
         if (e.shapes && e.shapes.length > 0) {
             const p = e.shapes[0].getProperties();
@@ -675,7 +444,7 @@ map.events.add('ready', async () => {
                     <h3>${p.county}, ${p.state}</h3>
                     <div class="popup-row">
                         <span class="popup-label">County Total Sales:</span>
-                        <span class="popup-value"><strong>${p.qty.toLocaleString()}</strong> units</span>
+                        <span class="popup-value"><strong>${Number(p.qty).toLocaleString()}</strong> units</span>
                     </div>
                 </div>`
             });
@@ -683,18 +452,17 @@ map.events.add('ready', async () => {
         }
     });
 
-    // Cursors
-    map.events.add('mouseover', dealerLayer,    () => { map.getCanvasContainer().style.cursor = 'pointer'; });
-    map.events.add('mouseout',  dealerLayer,    () => { map.getCanvasContainer().style.cursor = 'grab'; });
-    map.events.add('mouseover', countyFillLayer,() => { map.getCanvasContainer().style.cursor = 'crosshair'; });
-    map.events.add('mouseout',  countyFillLayer,() => { map.getCanvasContainer().style.cursor = 'grab'; });
+    map.events.add('mouseover', dealerLayer,     () => { map.getCanvasContainer().style.cursor = 'pointer'; });
+    map.events.add('mouseout',  dealerLayer,     () => { map.getCanvasContainer().style.cursor = 'grab'; });
+    map.events.add('mouseover', countyFillLayer, () => { map.getCanvasContainer().style.cursor = 'crosshair'; });
+    map.events.add('mouseout',  countyFillLayer, () => { map.getCanvasContainer().style.cursor = 'grab'; });
 
     refreshMap();
     updateStats();
     updateRBMList();
 });
 
-// ====== SHOW DEALER POPUP ======
+// ── Show dealer popup ─────────────────────────────────────────────────────
 function showDealerPopup(p) {
     popup.setOptions({
         position: [p.Longitude, p.Latitude],
@@ -704,7 +472,7 @@ function showDealerPopup(p) {
             <div class="popup-row"><span class="popup-label">Location:</span><span class="popup-value">${p.County}, ${p.State}</span></div>
             <div class="popup-row"><span class="popup-label">Territory:</span><span class="popup-value">${p.Territory}</span></div>
             <div class="popup-row"><span class="popup-label">RBM:</span><span class="popup-value">${p.RBM}</span></div>
-            <div class="popup-row"><span class="popup-label">Units:</span><span class="popup-value"><strong>${(p.MFG_Quantity||0).toLocaleString()}</strong></span></div>
+            <div class="popup-row"><span class="popup-label">Units:</span><span class="popup-value"><strong>${Number(p.MFG_Quantity||0).toLocaleString()}</strong></span></div>
             <div class="popup-row"><span class="popup-label">Segment:</span><span class="popup-value">${p.Segment}</span></div>
             <div class="popup-row"><span class="popup-label">Product:</span><span class="popup-value">${p.Product_Level2}</span></div>
             <div class="popup-row"><span class="popup-label">Type:</span><span class="popup-value">${p.Summary}</span></div>
@@ -713,25 +481,24 @@ function showDealerPopup(p) {
     popup.open(map);
 }
 
-// ====== REFRESH MAP LAYERS ======
+// ── Refresh map ───────────────────────────────────────────────────────────
 function refreshMap() {
     if (!countySource || !dealerSource) return;
     const filtered = getFiltered();
 
     countySource.clear();
-    countySource.add(buildCountyFeatures(filtered));
+    const features = buildCountyFeatures(filtered);
+    if (features.length) countySource.add(features);
 
     dealerSource.clear();
     filtered.forEach(d => {
-        if (d.Latitude && d.Longitude) {
-            dealerSource.add(new atlas.data.Feature(
-                new atlas.data.Point([d.Longitude, d.Latitude]), d
-            ));
-        }
+        dealerSource.add(new atlas.data.Feature(
+            new atlas.data.Point([parseFloat(d.Longitude), parseFloat(d.Latitude)]), d
+        ));
     });
 }
 
-// ====== APPLY FILTERS ======
+// ── Apply filters ─────────────────────────────────────────────────────────
 function applyFilters() {
     const state = document.getElementById('stateFilter').value;
     if (state) {
@@ -741,14 +508,13 @@ function applyFilters() {
     } else {
         populateDD('countyFilter', allCounties);
     }
-
     refreshMap();
     updateStats();
     updateRBMList();
     zoomToFiltered();
 }
 
-// ====== GET FILTERED DEALERS ======
+// ── Get filtered dealers — always validates coords before returning ────────
 function getFiltered() {
     const nation    = document.getElementById('nationFilter').value;
     const state     = document.getElementById('stateFilter').value;
@@ -759,6 +525,7 @@ function getFiltered() {
     const product   = document.getElementById('productFilter').value;
 
     return dealerData.filter(d =>
+        isValidCoord(d.Latitude, d.Longitude) &&   // <-- always sanity-check coords
         (!nation    || d.Nation         === nation)    &&
         (!state     || d.State          === state)     &&
         (!county    || d.County         === county)    &&
@@ -769,26 +536,52 @@ function getFiltered() {
     );
 }
 
-// ====== ZOOM TO FILTERED ======
+// ── Zoom to filtered — with Americas sanity clamp ─────────────────────────
 function zoomToFiltered() {
     const f = getFiltered();
-    if (!f.length) return;
-    if (f.length === 1) {
-        map.setCamera({ center: [f[0].Longitude, f[0].Latitude], zoom: 10, type: 'ease', duration: 1000 });
-    } else {
-        const bounds = atlas.data.BoundingBox.fromPositions(f.map(d => [d.Longitude, d.Latitude]));
-        map.setCamera({ bounds, padding: 80, type: 'ease', duration: 1000 });
+
+    // If nothing valid, just reset to North America default
+    if (!f.length) {
+        resetView();
+        return;
     }
+
+    if (f.length === 1) {
+        map.setCamera({
+            center: [parseFloat(f[0].Longitude), parseFloat(f[0].Latitude)],
+            zoom: 10,
+            type: 'ease',
+            duration: 1000
+        });
+        return;
+    }
+
+    // Build bounding box only from valid coordinates
+    const lons = f.map(d => parseFloat(d.Longitude));
+    const lats = f.map(d => parseFloat(d.Latitude));
+
+    const minLon = Math.max(Math.min(...lons), AMERICAS_LON_MIN);
+    const maxLon = Math.min(Math.max(...lons), AMERICAS_LON_MAX);
+    const minLat = Math.max(Math.min(...lats), AMERICAS_LAT_MIN);
+    const maxLat = Math.min(Math.max(...lats), AMERICAS_LAT_MAX);
+
+    // Extra sanity: if the resulting box is still nonsense, reset
+    if (minLon >= maxLon || minLat >= maxLat) {
+        resetView();
+        return;
+    }
+
+    const bounds = [minLon, minLat, maxLon, maxLat];
+    map.setCamera({ bounds, padding: 80, type: 'ease', duration: 1000 });
 }
 
-// ====== UPDATE STATS ======
+// ── Stats & RBM list ──────────────────────────────────────────────────────
 function updateStats() {
     const f = getFiltered();
     document.getElementById('totalDealers').textContent  = f.length;
-    document.getElementById('totalQuantity').textContent = f.reduce((s, d) => s + (d.MFG_Quantity || 0), 0).toLocaleString();
+    document.getElementById('totalQuantity').textContent = f.reduce((s,d) => s+(d.MFG_Quantity||0), 0).toLocaleString();
 }
 
-// ====== UPDATE RBM LIST ======
 function updateRBMList() {
     const f = getFiltered();
     const rbms = [...new Set(f.map(d => d.RBM))].sort();
@@ -803,14 +596,14 @@ function updateRBMList() {
     }
     rbms.forEach(r => {
         const cnt = f.filter(d => d.RBM === r).length;
-        const qty = f.filter(d => d.RBM === r).reduce((s, d) => s + (d.MFG_Quantity || 0), 0);
+        const qty = f.filter(d => d.RBM === r).reduce((s,d) => s+(d.MFG_Quantity||0), 0);
         const li = document.createElement('li');
         li.innerHTML = `<strong>${r}</strong><br><small>${cnt} dealers · ${qty.toLocaleString()} units</small>`;
         el.appendChild(li);
     });
 }
 
-// ====== TOGGLE LAYERS ======
+// ── Toggle layers ─────────────────────────────────────────────────────────
 function toggleLayer(type) {
     if (type === 'county') {
         const v = document.getElementById('toggleCounty').checked;
