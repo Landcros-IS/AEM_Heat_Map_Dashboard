@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,7 +20,6 @@
         box-shadow: 0 2px 10px rgba(0,0,0,0.2);
         align-items: center;
     }
-
     .filter-group { min-width: 120px; }
     .filter-group label { display: block; margin-bottom: 2px; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; }
     .filter-group select { width: 100%; padding: 4px 6px; border: none; border-radius: 5px; font-size: 12px; background: white; cursor: pointer; }
@@ -47,7 +47,7 @@
     .style-switcher { position: absolute; top: 20px; left: 70px; background: white; padding: 10px 12px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 10; }
     .style-switcher label { font-size: 11px; font-weight: 700; color: #667eea; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px; }
     .style-btn-group { display: flex; gap: 5px; }
-    .style-btn { padding: 5px 10px; border: 1.5px solid #ddd; border-radius: 5px; background: white; font-size: 12px; cursor: pointer; color: #555; transition: all 0.15s ease; white-space: nowrap; }
+    .style-btn { padding: 5px 10px; border: 1.5px solid #ddd; border-radius: 5px; background: white; font-size: 12px; cursor: pointer; color: #555; white-space: nowrap; }
     .style-btn:hover { border-color: #667eea; color: #667eea; }
     .style-btn.active { background: #667eea; border-color: #667eea; color: white; font-weight: 600; }
 
@@ -70,6 +70,7 @@
     .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
     @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
     .loading-text { margin-top: 20px; font-size: 18px; color: #667eea; font-weight: 600; }
+    .loading-sub { margin-top: 8px; font-size: 13px; color: #999; }
     .hidden { display: none; }
 
     .popup-content { font-size: 13px; padding: 5px; max-width: 290px; }
@@ -145,15 +146,13 @@
                 <span style="font-size:10px;color:#444;margin-left:3px;">Low → High</span>
             </div>
             <hr class="legend-divider">
-            <div class="legend-item">
-                <div class="legend-dot" style="background:#1a73e8;border:2px solid #0d47a1;"></div>
-                <span>Dealer Branch</span>
-            </div>
+            <div class="legend-item"><div class="legend-dot" style="background:#1a73e8;border:2px solid #0d47a1;"></div><span>Dealer Branch</span></div>
         </div>
 
         <div id="loadingOverlay" class="loading-overlay">
             <div class="loading-spinner"></div>
-            <div class="loading-text">Loading AEM data from Synapse...</div>
+            <div class="loading-text" id="loadingText">Loading AEM data…</div>
+            <div class="loading-sub" id="loadingSub"></div>
         </div>
     </div>
 </div>
@@ -161,53 +160,80 @@
 <script src="https://atlas.microsoft.com/sdk/javascript/mapcontrol/2/atlas.min.js"></script>
 <script>
 
-const SYNAPSE_CONFIG = { apiEndpoint: 'https://aem-heat-map-api.azurewebsites.net/api/getAEMData' };
+// ══════════════════════════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════════════════════════
+const API_ENDPOINT   = 'https://aem-heat-map-api.azurewebsites.net/api/getAEMData';
 const AZURE_MAPS_KEY = 'D2rj4Lkx4masQx5oO7bANUDBBDm8qLSgAAbH3jW7QdyRkS4CIbcpJQQJ99BEACYeBjFTRtVWAAAgAZMP4Mo0';
-
-// Default view: North America
-const DEFAULT_CENTER = [-96.5, 52.0];
-const DEFAULT_ZOOM   = 3.2;
+const DEFAULT_CENTER = [-96.5, 49.0];
+const DEFAULT_ZOOM   = 3.5;
 const MIN_ZOOM       = 2.5;
 const MAX_ZOOM       = 18;
+const NA_BOUNDS      = [-168, 24, -52, 72.5];
 
-// Hard geographic fence — covers all of North + South America.
-// Any coordinate outside this box is treated as invalid and skipped.
-const AMERICAS_LON_MIN = -170;
-const AMERICAS_LON_MAX =  -30;
-const AMERICAS_LAT_MIN =  -60;
-const AMERICAS_LAT_MAX =   75;
+// GeoJSON sources — same as your territory map
+const COUNTY_GEOJSON_URL = 'https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json';
+const CANADA_GEOJSON_URL = 'https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/canada.geojson';
 
-// maxBounds keeps panning locked to North America
-const NA_BOUNDS = [-168.0, 24.0, -52.0, 72.5];
+// ══════════════════════════════════════════════════════════════════════════
+// FIPS → State abbreviation (US only — same table as territory map)
+// ══════════════════════════════════════════════════════════════════════════
+const FIPS_TO_STATE = {
+    '01':'AL','02':'AK','04':'AZ','05':'AR','06':'CA','08':'CO','09':'CT',
+    '10':'DE','11':'DC','12':'FL','13':'GA','15':'HI','16':'ID','17':'IL',
+    '18':'IN','19':'IA','20':'KS','21':'KY','22':'LA','23':'ME','24':'MD',
+    '25':'MA','26':'MI','27':'MN','28':'MS','29':'MO','30':'MT','31':'NE',
+    '32':'NV','33':'NH','34':'NJ','35':'NM','36':'NY','37':'NC','38':'ND',
+    '39':'OH','40':'OK','41':'OR','42':'PA','44':'RI','45':'SC','46':'SD',
+    '47':'TN','48':'TX','49':'UT','50':'VT','51':'VA','53':'WA','54':'WV',
+    '55':'WI','56':'WY'
+};
 
+// State full-name → abbreviation
+const STATE_NAME_TO_ABBR = {
+    'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA',
+    'Colorado':'CO','Connecticut':'CT','Delaware':'DE','Florida':'FL','Georgia':'GA',
+    'Hawaii':'HI','Idaho':'ID','Illinois':'IL','Indiana':'IN','Iowa':'IA',
+    'Kansas':'KS','Kentucky':'KY','Louisiana':'LA','Maine':'ME','Maryland':'MD',
+    'Massachusetts':'MA','Michigan':'MI','Minnesota':'MN','Mississippi':'MS',
+    'Missouri':'MO','Montana':'MT','Nebraska':'NE','Nevada':'NV','New Hampshire':'NH',
+    'New Jersey':'NJ','New Mexico':'NM','New York':'NY','North Carolina':'NC',
+    'North Dakota':'ND','Ohio':'OH','Oklahoma':'OK','Oregon':'OR','Pennsylvania':'PA',
+    'Rhode Island':'RI','South Carolina':'SC','South Dakota':'SD','Tennessee':'TN',
+    'Texas':'TX','Utah':'UT','Vermont':'VT','Virginia':'VA','Washington':'WA',
+    'West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY','District of Columbia':'DC',
+    // Canada provinces
+    'Ontario':'ON','Quebec':'QC','British Columbia':'BC','Alberta':'AB',
+    'Saskatchewan':'SK','Manitoba':'MB','New Brunswick':'NB','Nova Scotia':'NS',
+    'Newfoundland and Labrador':'NL','Prince Edward Island':'PE',
+    'Northwest Territories':'NT','Yukon':'YT','Nunavut':'NU',
+    'Newfoundland':'NL','Québec':'QC'
+};
+
+// State abbreviation → full name (reverse lookup)
+const ABBR_TO_STATE_NAME = Object.fromEntries(Object.entries(STATE_NAME_TO_ABBR).map(([k,v])=>[v,k]));
+
+// ══════════════════════════════════════════════════════════════════════════
+// GLOBAL STATE
+// ══════════════════════════════════════════════════════════════════════════
 let dealerData = [];
-let map, dealerSource, countySource;
-let countyFillLayer, countyLineLayer, dealerLayer, labelLayer, popup;
+let allCountyGeoFeatures = [];  // raw US county features from GeoJSON
+let allCanadaGeoFeatures = [];  // raw Canada province features from GeoJSON
+
+let map, countySource, dealerSource;
+let countyFillLayer, countyBorderLayer, dealerLayer, labelLayer, popup;
+
 let allNations=new Set(), allStates=new Set(), allCounties=new Set();
 let allTerritories=new Set(), allRBMs=new Set(), allSegments=new Set(), allProducts=new Set();
 
-// ── Validate that a coordinate is actually in the Americas ────────────────
-function isValidCoord(lat, lon) {
-    if (lat == null || lon == null) return false;
-    const la = parseFloat(lat);
-    const lo = parseFloat(lon);
-    if (isNaN(la) || isNaN(lo)) return false;
-    if (la === 0 && lo === 0)   return false;   // classic null-island sentinel
-    return (
-        lo >= AMERICAS_LON_MIN && lo <= AMERICAS_LON_MAX &&
-        la >= AMERICAS_LAT_MIN && la <= AMERICAS_LAT_MAX
-    );
-}
-
-// ── Map Init ──────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+// MAP INIT
+// ══════════════════════════════════════════════════════════════════════════
 map = new atlas.Map('myMap', {
-    center: DEFAULT_CENTER,
-    zoom:   DEFAULT_ZOOM,
-    minZoom: MIN_ZOOM,
-    maxZoom: MAX_ZOOM,
+    center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM,
+    minZoom: MIN_ZOOM, maxZoom: MAX_ZOOM,
     maxBounds: NA_BOUNDS,
-    style: 'road',
-    language: 'en-US',
+    style: 'road', language: 'en-US',
     authOptions: { authType: 'subscriptionKey', subscriptionKey: AZURE_MAPS_KEY },
     showZoomControl: false, showPitchControl: false, showCompass: false
 });
@@ -221,9 +247,9 @@ map.events.add('moveend', () => {
 });
 
 document.addEventListener('keydown', e => {
-    if (e.target.tagName==='SELECT' || e.target.tagName==='INPUT') return;
-    if (e.key==='+' || e.key==='=') zoomIn();
-    if (e.key==='-' || e.key==='_') zoomOut();
+    if (e.target.tagName==='SELECT'||e.target.tagName==='INPUT') return;
+    if (e.key==='+'||e.key==='=') zoomIn();
+    if (e.key==='-'||e.key==='_') zoomOut();
     if (e.key==='0') resetView();
 });
 
@@ -234,135 +260,276 @@ function setMapStyle(style) {
     document.getElementById('btnDark').classList.toggle('active',      style==='night');
 }
 
-// ── Fetch ─────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+// COORDINATE VALIDATION — Americas only
+// ══════════════════════════════════════════════════════════════════════════
+function isValidCoord(lat, lon) {
+    if (lat == null || lon == null) return false;
+    const la = parseFloat(lat), lo = parseFloat(lon);
+    if (isNaN(la) || isNaN(lo) || (la===0 && lo===0)) return false;
+    return lo >= -170 && lo <= -30 && la >= -60 && la <= 75;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// COLOUR RAMP  (white-pink → dark red)
+// ══════════════════════════════════════════════════════════════════════════
+function lerp(a, b, t) { return Math.round(a + (b-a) * Math.min(1, Math.max(0,t))); }
+
+function normToColor(norm) {
+    const stops = [
+        [0,    [253,232,232], 0.75],
+        [0.25, [244,160,160], 0.82],
+        [0.5,  [212, 90, 90], 0.87],
+        [0.75, [178, 34, 34], 0.92],
+        [1.0,  [139,  0,  0], 0.96]
+    ];
+    for (let i = 0; i < stops.length-1; i++) {
+        const [t0,c0,a0]=stops[i], [t1,c1,a1]=stops[i+1];
+        if (norm <= t1) {
+            const t=(norm-t0)/(t1-t0);
+            return `rgba(${lerp(c0[0],c1[0],t)},${lerp(c0[1],c1[1],t)},${lerp(c0[2],c1[2],t)},${(a0+(a1-a0)*t).toFixed(2)})`;
+        }
+    }
+    return 'rgba(139,0,0,0.96)';
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// DATA FETCH
+// ══════════════════════════════════════════════════════════════════════════
 async function fetchAEMData() {
     try {
-        const res = await fetch(SYNAPSE_CONFIG.apiEndpoint, { method:'GET', headers:{'Content-Type':'application/json'} });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const res = await fetch(API_ENDPOINT, { method:'GET', headers:{'Content-Type':'application/json'} });
+        if (!res.ok) throw new Error('HTTP '+res.status);
         const data = await res.json();
         return data.results || data;
     } catch(e) {
-        console.warn('Using sample data:', e.message);
+        console.warn('[AEM] Falling back to sample data:', e.message);
         return getSampleData();
     }
 }
 
-// ── Sample Data ───────────────────────────────────────────────────────────
 function getSampleData() {
     return [
-        { Nation:'Canada', State:'ON', County:'Toronto',     Territory:'Central',      RBM:'Quoc Nguyen',    MFG_Quantity:125, ParentDealerId:'WJX200', ParentDealerName:'Wajax Limited',                  Segment:'Construction', Product_Level2:'Heavy Equipment',       Summary:'Full Line Dealer', Latitude:43.6532,  Longitude:-79.3832  },
-        { Nation:'Canada', State:'ON', County:'Peel',        Territory:'Central',      RBM:'Quoc Nguyen',    MFG_Quantity:98,  ParentDealerId:'WJX201', ParentDealerName:'Wajax Limited - Mississauga',     Segment:'Construction', Product_Level2:'Heavy Equipment',       Summary:'Full Line Dealer', Latitude:43.5890,  Longitude:-79.6441  },
-        { Nation:'Canada', State:'ON', County:'Ottawa',      Territory:'Central-East', RBM:'Sarah Johnson',  MFG_Quantity:156, ParentDealerId:'TOR100', ParentDealerName:'Toromont Cat',                    Segment:'Construction', Product_Level2:'Construction Equipment', Summary:'Full Line Dealer', Latitude:45.4215,  Longitude:-75.6972  },
-        { Nation:'Canada', State:'BC', County:'Vancouver',   Territory:'West Coast',   RBM:'Mike Chen',      MFG_Quantity:187, ParentDealerId:'FIN200', ParentDealerName:'Finning Canada',                  Segment:'Mining',       Product_Level2:'Heavy Equipment',       Summary:'Full Line Dealer', Latitude:49.2827,  Longitude:-123.1207 },
-        { Nation:'Canada', State:'BC', County:'Surrey',      Territory:'West Coast',   RBM:'Mike Chen',      MFG_Quantity:134, ParentDealerId:'FIN201', ParentDealerName:'Finning Canada - Surrey',         Segment:'Construction', Product_Level2:'Heavy Equipment',       Summary:'Specialty Dealer', Latitude:49.1913,  Longitude:-122.8490 },
-        { Nation:'Canada', State:'BC', County:'Langley',     Territory:'West Coast',   RBM:'Mike Chen',      MFG_Quantity:76,  ParentDealerId:'FIN202', ParentDealerName:'Finning Canada - Langley',       Segment:'Agriculture',  Product_Level2:'Compact Equipment',     Summary:'Specialty Dealer', Latitude:49.1042,  Longitude:-122.5621 },
-        { Nation:'Canada', State:'AB', County:'Calgary',     Territory:'Prairies',     RBM:'David Martinez', MFG_Quantity:203, ParentDealerId:'FIN300', ParentDealerName:'Finning Canada - Calgary',       Segment:'Mining',       Product_Level2:'Heavy Equipment',       Summary:'Full Line Dealer', Latitude:51.0447,  Longitude:-114.0719 },
-        { Nation:'Canada', State:'AB', County:'Edmonton',    Territory:'Prairies',     RBM:'David Martinez', MFG_Quantity:145, ParentDealerId:'BRA100', ParentDealerName:'Brandt Tractor',                  Segment:'Construction', Product_Level2:'Construction Equipment', Summary:'Specialty Dealer', Latitude:53.5461,  Longitude:-113.4938 },
-        { Nation:'Canada', State:'AB', County:'Red Deer',    Territory:'Prairies',     RBM:'David Martinez', MFG_Quantity:67,  ParentDealerId:'WJX300', ParentDealerName:'Wajax Limited - Red Deer',       Segment:'Agriculture',  Product_Level2:'Compact Equipment',     Summary:'Full Line Dealer', Latitude:52.2681,  Longitude:-113.8117 },
-        { Nation:'Canada', State:'QC', County:'Montreal',    Territory:'Quebec',       RBM:'Jean Leblanc',   MFG_Quantity:178, ParentDealerId:'HEW100', ParentDealerName:'Hewitt Equipment',                Segment:'Construction', Product_Level2:'Heavy Equipment',       Summary:'Full Line Dealer', Latitude:45.5017,  Longitude:-73.5673  },
-        { Nation:'Canada', State:'QC', County:'Quebec',      Territory:'Quebec',       RBM:'Jean Leblanc',   MFG_Quantity:92,  ParentDealerId:'HEW101', ParentDealerName:'Hewitt Equipment - Quebec City',  Segment:'Construction', Product_Level2:'Construction Equipment', Summary:'Specialty Dealer', Latitude:46.8139,  Longitude:-71.2080  },
-        { Nation:'Canada', State:'QC', County:'Laval',       Territory:'Quebec',       RBM:'Jean Leblanc',   MFG_Quantity:143, ParentDealerId:'STR100', ParentDealerName:'Strongco',                        Segment:'Mining',       Product_Level2:'Heavy Equipment',       Summary:'Full Line Dealer', Latitude:45.6066,  Longitude:-73.7124  },
-        { Nation:'Canada', State:'MB', County:'Winnipeg',    Territory:'Central',      RBM:'Tom Anderson',   MFG_Quantity:114, ParentDealerId:'CER100', ParentDealerName:'Cervus Equipment',                Segment:'Agriculture',  Product_Level2:'Agriculture Equipment', Summary:'Full Line Dealer', Latitude:49.8951,  Longitude:-97.1384  },
-        { Nation:'Canada', State:'MB', County:'Brandon',     Territory:'Central',      RBM:'Tom Anderson',   MFG_Quantity:58,  ParentDealerId:'CER101', ParentDealerName:'Cervus Equipment - Brandon',      Segment:'Agriculture',  Product_Level2:'Compact Equipment',     Summary:'Specialty Dealer', Latitude:49.8483,  Longitude:-99.9501  },
-        { Nation:'Canada', State:'NS', County:'Halifax',     Territory:'Atlantic',     RBM:'Robert MacLeod', MFG_Quantity:89,  ParentDealerId:'ATL100', ParentDealerName:'Atlantic Tractor',                Segment:'Construction', Product_Level2:'Construction Equipment', Summary:'Full Line Dealer', Latitude:44.6488,  Longitude:-63.5752  },
-        { Nation:'Canada', State:'NS', County:'Cape Breton', Territory:'Atlantic',     RBM:'Robert MacLeod', MFG_Quantity:45,  ParentDealerId:'ATL101', ParentDealerName:'Atlantic Cat',                    Segment:'Forestry',     Product_Level2:'Compact Equipment',     Summary:'Specialty Dealer', Latitude:46.1351,  Longitude:-60.1831  },
-        { Nation:'Canada', State:'NB', County:'Moncton',     Territory:'Atlantic',     RBM:'Emily Fraser',   MFG_Quantity:72,  ParentDealerId:'TOR200', ParentDealerName:'Toromont Cat - Moncton',          Segment:'Construction', Product_Level2:'Construction Equipment', Summary:'Full Line Dealer', Latitude:46.0878,  Longitude:-64.7782  },
-        { Nation:'Canada', State:'NL', County:"St. John's",  Territory:'Atlantic',     RBM:'Robert MacLeod', MFG_Quantity:81,  ParentDealerId:'ATL200', ParentDealerName:"Atlantic Tractor - St. John's",   Segment:'Mining',       Product_Level2:'Heavy Equipment',       Summary:'Full Line Dealer', Latitude:47.5615,  Longitude:-52.7126  }
+        { Nation:'United States', State:'Texas',      County:'Dallas, TX',        Territory:'South',   RBM:'William Swartz',  MFG_Quantity:203, ParentDealerId:'DLR001', ParentDealerName:'Texas Equipment Co',      Segment:'Construction', Product_Level2:'Wheel Loaders', Summary:'Full Line Dealer', Latitude:32.7767,  Longitude:-96.7970  },
+        { Nation:'United States', State:'Texas',      County:'Harris, TX',         Territory:'South',   RBM:'William Swartz',  MFG_Quantity:145, ParentDealerId:'DLR002', ParentDealerName:'Houston Machinery',       Segment:'Construction', Product_Level2:'Wheel Loaders', Summary:'Full Line Dealer', Latitude:29.7604,  Longitude:-95.3698  },
+        { Nation:'United States', State:'California', County:'Los Angeles, CA',    Territory:'West',    RBM:'Glenn Young',     MFG_Quantity:187, ParentDealerId:'DLR003', ParentDealerName:'Pacific Equipment',       Segment:'Mining',       Product_Level2:'Wheel Loaders', Summary:'Full Line Dealer', Latitude:34.0522,  Longitude:-118.2437 },
+        { Nation:'United States', State:'California', County:'San Bernardino, CA', Territory:'West',    RBM:'Glenn Young',     MFG_Quantity:96,  ParentDealerId:'DLR004', ParentDealerName:'Inland Empire Equip',     Segment:'Construction', Product_Level2:'Wheel Loaders', Summary:'Specialty Dealer', Latitude:34.1083,  Longitude:-117.2898 },
+        { Nation:'United States', State:'Pennsylvania',County:'Philadelphia, PA',  Territory:'NorthEast',RBM:'Shane Holveck',  MFG_Quantity:134, ParentDealerId:'DLR005', ParentDealerName:'Philly Construction',     Segment:'Construction', Product_Level2:'Wheel Loaders', Summary:'Full Line Dealer', Latitude:39.9526,  Longitude:-75.1652  },
+        { Nation:'United States', State:'Ohio',       County:'Cuyahoga, OH',       Territory:'Midwest', RBM:'Paul Kindelspire',MFG_Quantity:112, ParentDealerId:'DLR006', ParentDealerName:'Great Lakes Equipment',   Segment:'Construction', Product_Level2:'Wheel Loaders', Summary:'Full Line Dealer', Latitude:41.4993,  Longitude:-81.6944  },
+        { Nation:'United States', State:'Illinois',   County:'Cook, IL',           Territory:'Midwest', RBM:'Paul Kindelspire',MFG_Quantity:178, ParentDealerId:'DLR007', ParentDealerName:'Midwest Machinery',       Segment:'Construction', Product_Level2:'Wheel Loaders', Summary:'Full Line Dealer', Latitude:41.8781,  Longitude:-87.6298  },
+        { Nation:'United States', State:'Louisiana',  County:'Ascension, LA',      Territory:'South',   RBM:'William Swartz',  MFG_Quantity:67,  ParentDealerId:'DLR008', ParentDealerName:'Gulf Coast Equipment',    Segment:'Construction', Product_Level2:'Wheel Loaders', Summary:'Specialty Dealer', Latitude:30.1896,  Longitude:-90.9346  },
+        { Nation:'United States', State:'Maine',      County:'Cumberland, ME',     Territory:'NorthEast',RBM:'Shane Holveck',  MFG_Quantity:45,  ParentDealerId:'DLR009', ParentDealerName:'New England Equipment',   Segment:'Construction', Product_Level2:'Wheel Loaders', Summary:'Specialty Dealer', Latitude:43.6591,  Longitude:-70.2568  },
+        { Nation:'United States', State:'South Dakota',County:'Minnehaha, SD',    Territory:'Midwest', RBM:'Paul Kindelspire',MFG_Quantity:58,  ParentDealerId:'DLR010', ParentDealerName:'Dakota Equipment',        Segment:'Agriculture',  Product_Level2:'Wheel Loaders', Summary:'Specialty Dealer', Latitude:43.5446,  Longitude:-96.7311  },
+        { Nation:'Canada',        State:'Alberta',    County:'Rocky View County, AB',Territory:'Canada',RBM:'Quoc Nguyen',    MFG_Quantity:156, ParentDealerId:'DLR011', ParentDealerName:'Alberta Machinery',       Segment:'Mining',       Product_Level2:'Wheel Loaders', Summary:'Full Line Dealer', Latitude:51.1784,  Longitude:-114.1744 },
+        { Nation:'Canada',        State:'Ontario',    County:'Toronto, ON',        Territory:'Canada',  RBM:'Quoc Nguyen',    MFG_Quantity:125, ParentDealerId:'DLR012', ParentDealerName:'Ontario Equipment',       Segment:'Construction', Product_Level2:'Wheel Loaders', Summary:'Full Line Dealer', Latitude:43.6532,  Longitude:-79.3832  }
     ];
 }
 
-// ── Aggregate ─────────────────────────────────────────────────────────────
-function aggregateByDealer(data) {
+// ══════════════════════════════════════════════════════════════════════════
+// AGGREGATE BY DEALER (uses exact Synapse field names)
+// ══════════════════════════════════════════════════════════════════════════
+function aggregateByDealer(raw) {
     const m = new Map();
-    data.forEach(r => {
-        // Skip records with bad coordinates immediately at ingest
-        if (!isValidCoord(r.Latitude, r.Longitude)) return;
-        const k = `${r.ParentDealerId}_${r.Latitude}_${r.Longitude}`;
-        if (m.has(k)) m.get(k).MFG_Quantity += (r.MFG_Quantity || 0);
-        else m.set(k, { ...r, MFG_Quantity: r.MFG_Quantity || 0, recordCount: 1 });
+    raw.forEach(r => {
+        const lat = parseFloat(r.Latitude);
+        const lon = parseFloat(r.Longitude);
+        if (!isValidCoord(lat, lon)) return;
+
+        const key = `${r.ParentDealerId}|${lat}|${lon}`;
+        if (m.has(key)) {
+            m.get(key).MFG_Quantity += (parseFloat(r.MFG_Quantity) || 0);
+        } else {
+            m.set(key, {
+                Latitude:         lat,
+                Longitude:        lon,
+                MFG_Quantity:     parseFloat(r.MFG_Quantity) || 0,
+                State:            r.State        || '',
+                County:           r.County       || '',
+                Nation:           r.Nation       || '',
+                Territory:        r.Territory    || '',
+                RBM:              r.RBM          || '',
+                ParentDealerId:   r.ParentDealerId   || '',
+                ParentDealerName: r.ParentDealerName || '',
+                Segment:          r.Segment      || '',
+                Product_Level2:   r.Product_Level2   || '',
+                Summary:          r.Summary      || ''
+            });
+        }
     });
     return Array.from(m.values());
 }
 
-// ── Colour helpers ────────────────────────────────────────────────────────
-function lerp(a, b, t) { return Math.round(a + (b-a) * Math.min(1, Math.max(0, t))); }
+// ══════════════════════════════════════════════════════════════════════════
+// COUNTY SALES LOOKUP  — keyed as  "STATEABBR|COUNTY_NAME_UPPER"
+// Your County field looks like "Dallas, TX" or "San Bernardino, CA"
+// We strip the trailing ", XX" to get the county name, and use XX as state.
+// ══════════════════════════════════════════════════════════════════════════
+function buildCountySalesMap(filtered) {
+    // { "TX|DALLAS": qty, ... }
+    const salesMap = {};
 
-function normToColor(norm) {
-    const stops = [
-        [0,    [253,232,232], 0.72],
-        [0.25, [244,160,160], 0.78],
-        [0.5,  [212, 90, 90], 0.84],
-        [0.75, [178, 34, 34], 0.90],
-        [1.0,  [139,  0,  0], 0.94]
-    ];
-    for (let i = 0; i < stops.length - 1; i++) {
-        const [t0, c0, a0] = stops[i];
-        const [t1, c1, a1] = stops[i+1];
-        if (norm <= t1) {
-            const t = (norm - t0) / (t1 - t0);
-            return `rgba(${lerp(c0[0],c1[0],t)},${lerp(c0[1],c1[1],t)},${lerp(c0[2],c1[2],t)},${(a0+(a1-a0)*t).toFixed(2)})`;
+    filtered.forEach(d => {
+        // County field examples: "Dallas, TX"  /  "San Bernardino, CA"  /  "Ascension, LA"
+        // State field examples:  "Texas"  /  "Alberta"  /  "United States" (sometimes)
+        let stateAbbr = '';
+        let countyName = '';
+
+        const county = (d.County || '').trim();
+        const stateRaw = (d.State || '').trim();
+
+        // Strategy A: parse "Name, XX" from County field
+        const commaMatch = county.match(/^(.+),\s*([A-Z]{2})$/);
+        if (commaMatch) {
+            countyName = commaMatch[1].toUpperCase().trim();
+            stateAbbr  = commaMatch[2].toUpperCase();
+        } else {
+            // Strategy B: use State field to get abbreviation
+            countyName = county.toUpperCase();
+            stateAbbr  = STATE_NAME_TO_ABBR[stateRaw] || stateRaw.slice(0,2).toUpperCase();
         }
-    }
-    return 'rgba(139,0,0,0.94)';
-}
 
-// ── Build county polygon features ─────────────────────────────────────────
-function buildCountyFeatures(filtered) {
-    const groups = {};
-    filtered.forEach(r => {
-        const k = `${r.State}|${r.County}`;
-        if (!groups[k]) groups[k] = { lat: parseFloat(r.Latitude), lon: parseFloat(r.Longitude), qty: 0, county: r.County, state: r.State };
-        groups[k].qty += (r.MFG_Quantity || 0);
+        if (!countyName || !stateAbbr) return;
+
+        const key = `${stateAbbr}|${countyName}`;
+        salesMap[key] = (salesMap[key] || 0) + d.MFG_Quantity;
     });
 
-    const vals = Object.values(groups);
-    const maxQty = Math.max(1, ...vals.map(c => c.qty));
+    return salesMap;
+}
 
-    return vals.map(c => {
-        const norm  = c.qty / maxQty;
-        const color = normToColor(norm);
-        const deg   = 0.38;
-        const box   = [
-            [c.lon-deg, c.lat-deg],
-            [c.lon+deg, c.lat-deg],
-            [c.lon+deg, c.lat+deg],
-            [c.lon-deg, c.lat+deg],
-            [c.lon-deg, c.lat-deg]
+// ══════════════════════════════════════════════════════════════════════════
+// PAINT COUNTY CHOROPLETH using real GeoJSON boundaries
+// ══════════════════════════════════════════════════════════════════════════
+function paintCountyChoropleth(filtered) {
+    if (!countySource) return;
+
+    const salesMap = buildCountySalesMap(filtered);
+    const maxQty   = Math.max(1, ...Object.values(salesMap));
+
+    const coloredFeatures = [];
+
+    // ── US counties ──────────────────────────────────────────────────────
+    for (const feat of allCountyGeoFeatures) {
+        const props = feat.properties || {};
+
+        // Get FIPS state code
+        let fips = '';
+        if (props.STATE)  fips = String(props.STATE).padStart(2,'0');
+        else if (props.GEO_ID) fips = String(props.GEO_ID).slice(-5,-3);
+
+        const stateAbbr  = FIPS_TO_STATE[fips] || '';
+        const rawName    = (props.NAME || '').toUpperCase().trim();
+
+        // Try several county name variants
+        const variants = [
+            rawName,
+            rawName + ' COUNTY',
+            rawName + ' PARISH',
+            rawName.replace(/^ST\.\s+/, 'SAINT '),
+            rawName.replace(/^SAINT\s+/, 'ST. ')
         ];
-        return new atlas.data.Feature(
-            new atlas.data.Polygon([box]),
-            { qty: c.qty, norm, county: c.county, state: c.state, fillColor: color }
-        );
-    });
-}
 
-// ── Init ──────────────────────────────────────────────────────────────────
-async function initializeApp() {
-    try {
-        const raw = await fetchAEMData();
-        if (!raw || !raw.length) throw new Error('No data received');
+        let qty = 0;
+        for (const v of variants) {
+            const k = `${stateAbbr}|${v}`;
+            if (salesMap[k]) { qty = salesMap[k]; break; }
+        }
 
-        dealerData = aggregateByDealer(raw);
+        if (qty === 0) continue;  // skip unshaded counties for performance
 
-        dealerData.forEach(d => {
-            if (d.Nation)         allNations.add(d.Nation);
-            if (d.State)          allStates.add(d.State);
-            if (d.County)         allCounties.add(d.County);
-            if (d.Territory)      allTerritories.add(d.Territory);
-            if (d.RBM)            allRBMs.add(d.RBM);
-            if (d.Segment)        allSegments.add(d.Segment);
-            if (d.Product_Level2) allProducts.add(d.Product_Level2);
+        const fillColor = normToColor(qty / maxQty);
+        coloredFeatures.push({
+            ...feat,
+            properties: { ...props, qty, fillColor, displayName: props.NAME, stateAbbr }
         });
-
-        populateFilters();
-        document.getElementById('loadingOverlay').classList.add('hidden');
-    } catch(e) {
-        document.getElementById('loadingOverlay').innerHTML =
-            `<div style="background:#fee;color:#c33;padding:15px;border-radius:8px;border:1px solid #fcc;margin:20px;">
-                <strong>Error:</strong> ${e.message}
-            </div>`;
     }
+
+    // ── Canada provinces (used as county-level stand-in) ─────────────────
+    for (const feat of allCanadaGeoFeatures) {
+        const props = feat.properties || {};
+        const provName  = (props.name || props.NAME || '').trim();
+        const provAbbr  = STATE_NAME_TO_ABBR[provName] || '';
+        if (!provAbbr) continue;
+
+        // Sales for this province: sum all dealers with matching state abbr
+        const provQty = filtered
+            .filter(d => {
+                const abbr = STATE_NAME_TO_ABBR[d.State] || d.State.slice(0,2).toUpperCase();
+                return abbr === provAbbr;
+            })
+            .reduce((s,d) => s+d.MFG_Quantity, 0);
+
+        if (provQty === 0) continue;
+
+        const fillColor = normToColor(provQty / maxQty);
+        coloredFeatures.push({
+            ...feat,
+            properties: { ...props, qty: provQty, fillColor, displayName: provName, stateAbbr: provAbbr }
+        });
+    }
+
+    countySource.clear();
+    if (coloredFeatures.length > 0) {
+        countySource.add({ type:'FeatureCollection', features: coloredFeatures });
+    }
+    console.log(`[AEM] County choropleth: ${coloredFeatures.length} shaded counties / provinces`);
 }
+
+// ══════════════════════════════════════════════════════════════════════════
+// INIT APPLICATION
+// ══════════════════════════════════════════════════════════════════════════
+async function initializeApp() {
+    setLoadingText('Fetching AEM sales data…');
+
+    const [rawData] = await Promise.all([fetchAEMData()]);
+    dealerData = aggregateByDealer(rawData);
+    console.log('[AEM] Dealers loaded:', dealerData.length);
+
+    dealerData.forEach(d => {
+        if (d.Nation)         allNations.add(d.Nation);
+        if (d.State)          allStates.add(d.State);
+        if (d.County)         allCounties.add(d.County);
+        if (d.Territory)      allTerritories.add(d.Territory);
+        if (d.RBM)            allRBMs.add(d.RBM);
+        if (d.Segment)        allSegments.add(d.Segment);
+        if (d.Product_Level2) allProducts.add(d.Product_Level2);
+    });
+
+    populateFilters();
+
+    setLoadingText('Loading county boundaries…');
+    setSub('Fetching US counties GeoJSON…');
+    await loadBoundaries();
+
+    document.getElementById('loadingOverlay').classList.add('hidden');
+    refreshMap();
+    updateStats();
+    updateRBMList();
+}
+
+async function loadBoundaries() {
+    try {
+        setSub('Loading US counties…');
+        const countyRes = await fetch(COUNTY_GEOJSON_URL);
+        const countyGeo = await countyRes.json();
+        allCountyGeoFeatures = countyGeo.features || [];
+        console.log('[AEM] US county features loaded:', allCountyGeoFeatures.length);
+    } catch(e) { console.error('[AEM] County GeoJSON failed:', e); }
+
+    try {
+        setSub('Loading Canada provinces…');
+        const canadaRes = await fetch(CANADA_GEOJSON_URL);
+        const canadaGeo = await canadaRes.json();
+        allCanadaGeoFeatures = (canadaGeo.features || []).map(f => ({
+            ...f,
+            properties: { ...f.properties, name: f.properties.name || f.properties.NAME || '' }
+        }));
+        console.log('[AEM] Canada features loaded:', allCanadaGeoFeatures.length);
+    } catch(e) { console.error('[AEM] Canada GeoJSON failed:', e); }
+}
+
+function setLoadingText(msg) { document.getElementById('loadingText').textContent = msg; }
+function setSub(msg) { document.getElementById('loadingSub').textContent = msg; }
 
 function populateFilters() {
     populateDD('nationFilter',    allNations);
@@ -372,7 +539,6 @@ function populateFilters() {
     populateDD('rbmFilter',       allRBMs);
     populateDD('segmentFilter',   allSegments);
     populateDD('productFilter',   allProducts);
-    refreshMap();
 }
 
 function populateDD(id, set) {
@@ -387,49 +553,53 @@ function populateDD(id, set) {
     });
 }
 
-// ── Map Ready ─────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+// MAP READY
+// ══════════════════════════════════════════════════════════════════════════
 map.events.add('ready', async () => {
-    await initializeApp();
 
-    countySource = new atlas.source.DataSource();
+    // County choropleth source + layers
+    countySource = new atlas.source.DataSource(null, { cluster: false });
     map.sources.add(countySource);
 
-    countyFillLayer = new atlas.layer.PolygonLayer(countySource, null, {
-        fillColor: ['get', 'fillColor'],
+    countyFillLayer = new atlas.layer.PolygonLayer(countySource, 'countyFill', {
+        fillColor:   ['get','fillColor'],
         fillOpacity: 1
     });
     map.layers.add(countyFillLayer, 'labels');
 
-    countyLineLayer = new atlas.layer.LineLayer(countySource, null, {
-        strokeColor: 'rgba(255,255,255,0.5)',
-        strokeWidth: 0.8
+    countyBorderLayer = new atlas.layer.LineLayer(countySource, 'countyBorder', {
+        strokeColor: 'rgba(80,100,130,0.25)',
+        strokeWidth: 0.6
     });
-    map.layers.add(countyLineLayer, 'labels');
+    map.layers.add(countyBorderLayer, 'labels');
 
+    // Dealer pin source + layers
     dealerSource = new atlas.source.DataSource();
     map.sources.add(dealerSource);
 
-    dealerLayer = new atlas.layer.BubbleLayer(dealerSource, null, {
+    dealerLayer = new atlas.layer.BubbleLayer(dealerSource, 'dealerBubble', {
         radius: 8,
-        color: '#1a73e8',
+        color:  '#1a73e8',
         strokeColor: '#0d47a1',
         strokeWidth: 2,
         opacity: 0.95
     });
     map.layers.add(dealerLayer);
 
-    labelLayer = new atlas.layer.SymbolLayer(dealerSource, 'labelLayer', {
-        iconOptions: { image: 'none' },
+    labelLayer = new atlas.layer.SymbolLayer(dealerSource, 'dealerLabel', {
+        iconOptions: { image:'none' },
         textOptions: {
-            textField: ['get', 'ParentDealerName'],
-            offset: [0, 1.5], size: 11,
-            color: '#000000', haloColor: '#ffffff', haloWidth: 2, allowOverlap: false
+            textField: ['get','ParentDealerName'],
+            offset:[0,1.5], size:11,
+            color:'#000', haloColor:'#fff', haloWidth:2, allowOverlap:false
         }
     });
     map.layers.add(labelLayer);
     labelLayer.setOptions({ visible: false });
 
-    popup = new atlas.Popup({ pixelOffset: [0, -12], closeButton: true });
+    // Popup
+    popup = new atlas.Popup({ pixelOffset:[0,-12], closeButton:true });
 
     map.events.add('click', dealerLayer, e => {
         if (e.shapes && e.shapes.length > 0) showDealerPopup(e.shapes[0].getProperties());
@@ -441,28 +611,132 @@ map.events.add('ready', async () => {
             popup.setOptions({
                 position: e.position,
                 content: `<div class="popup-content">
-                    <h3>${p.county}, ${p.state}</h3>
-                    <div class="popup-row">
-                        <span class="popup-label">County Total Sales:</span>
-                        <span class="popup-value"><strong>${Number(p.qty).toLocaleString()}</strong> units</span>
-                    </div>
+                    <h3>${p.displayName || p.NAME || 'County'}, ${p.stateAbbr || ''}</h3>
+                    <div class="popup-row"><span class="popup-label">County Sales:</span><span class="popup-value"><strong>${Number(p.qty||0).toLocaleString()}</strong> units</span></div>
                 </div>`
             });
             popup.open(map);
         }
     });
 
-    map.events.add('mouseover', dealerLayer,     () => { map.getCanvasContainer().style.cursor = 'pointer'; });
-    map.events.add('mouseout',  dealerLayer,     () => { map.getCanvasContainer().style.cursor = 'grab'; });
-    map.events.add('mouseover', countyFillLayer, () => { map.getCanvasContainer().style.cursor = 'crosshair'; });
-    map.events.add('mouseout',  countyFillLayer, () => { map.getCanvasContainer().style.cursor = 'grab'; });
+    map.events.add('mouseover', dealerLayer,     () => { map.getCanvasContainer().style.cursor='pointer'; });
+    map.events.add('mouseout',  dealerLayer,     () => { map.getCanvasContainer().style.cursor='grab'; });
+    map.events.add('mouseover', countyFillLayer, () => { map.getCanvasContainer().style.cursor='crosshair'; });
+    map.events.add('mouseout',  countyFillLayer, () => { map.getCanvasContainer().style.cursor='grab'; });
 
+    // Now load everything
+    await initializeApp();
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// REFRESH MAP
+// ══════════════════════════════════════════════════════════════════════════
+function refreshMap() {
+    if (!countySource || !dealerSource) return;
+    const filtered = getFiltered();
+
+    // Real county boundary choropleth
+    paintCountyChoropleth(filtered);
+
+    // Dealer bubble pins
+    dealerSource.clear();
+    filtered.forEach(d => {
+        dealerSource.add(new atlas.data.Feature(
+            new atlas.data.Point([d.Longitude, d.Latitude]), d
+        ));
+    });
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// FILTERS
+// ══════════════════════════════════════════════════════════════════════════
+function applyFilters() {
+    const state = document.getElementById('stateFilter').value;
+    if (state) {
+        const cs = new Set();
+        dealerData.filter(d=>d.State===state).forEach(d => { if(d.County) cs.add(d.County); });
+        populateDD('countyFilter', cs);
+    } else {
+        populateDD('countyFilter', allCounties);
+    }
     refreshMap();
     updateStats();
     updateRBMList();
-});
+    zoomToFiltered();
+}
 
-// ── Show dealer popup ─────────────────────────────────────────────────────
+function getFiltered() {
+    const nation    = document.getElementById('nationFilter').value;
+    const state     = document.getElementById('stateFilter').value;
+    const county    = document.getElementById('countyFilter').value;
+    const territory = document.getElementById('territoryFilter').value;
+    const rbm       = document.getElementById('rbmFilter').value;
+    const segment   = document.getElementById('segmentFilter').value;
+    const product   = document.getElementById('productFilter').value;
+    return dealerData.filter(d =>
+        isValidCoord(d.Latitude, d.Longitude) &&
+        (!nation    || d.Nation         === nation)    &&
+        (!state     || d.State          === state)     &&
+        (!county    || d.County         === county)    &&
+        (!territory || d.Territory      === territory) &&
+        (!rbm       || d.RBM            === rbm)       &&
+        (!segment   || d.Segment        === segment)   &&
+        (!product   || d.Product_Level2 === product)
+    );
+}
+
+function zoomToFiltered() {
+    const f = getFiltered();
+    if (!f.length) { resetView(); return; }
+    if (f.length === 1) {
+        map.setCamera({ center:[f[0].Longitude, f[0].Latitude], zoom:10, type:'ease', duration:1000 });
+        return;
+    }
+    const lons = f.map(d=>d.Longitude), lats = f.map(d=>d.Latitude);
+    const minLon = Math.max(Math.min(...lons), -170);
+    const maxLon = Math.min(Math.max(...lons), -30);
+    const minLat = Math.max(Math.min(...lats), -60);
+    const maxLat = Math.min(Math.max(...lats), 75);
+    if (minLon >= maxLon || minLat >= maxLat) { resetView(); return; }
+    map.setCamera({ bounds:[minLon,minLat,maxLon,maxLat], padding:80, type:'ease', duration:1000 });
+}
+
+function updateStats() {
+    const f = getFiltered();
+    document.getElementById('totalDealers').textContent  = f.length;
+    document.getElementById('totalQuantity').textContent = f.reduce((s,d)=>s+(d.MFG_Quantity||0),0).toLocaleString();
+}
+
+function updateRBMList() {
+    const f = getFiltered();
+    const rbms = [...new Set(f.map(d=>d.RBM).filter(Boolean))].sort();
+    const el = document.getElementById('rbmList');
+    el.innerHTML = '';
+    if (!rbms.length) {
+        const li=document.createElement('li'); li.textContent='No RBMs'; li.style.cssText='font-style:italic;color:#999'; el.appendChild(li); return;
+    }
+    rbms.forEach(r => {
+        const cnt = f.filter(d=>d.RBM===r).length;
+        const qty = f.filter(d=>d.RBM===r).reduce((s,d)=>s+(d.MFG_Quantity||0),0);
+        const li  = document.createElement('li');
+        li.innerHTML = `<strong>${r}</strong><br><small>${cnt} dealers · ${qty.toLocaleString()} units</small>`;
+        el.appendChild(li);
+    });
+}
+
+function toggleLayer(type) {
+    if (type==='county') {
+        const v=document.getElementById('toggleCounty').checked;
+        countyFillLayer.setOptions({visible:v});
+        countyBorderLayer.setOptions({visible:v});
+    }
+    if (type==='pins')   dealerLayer.setOptions({visible:document.getElementById('togglePins').checked});
+    if (type==='labels') labelLayer.setOptions({visible:document.getElementById('toggleLabels').checked});
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// DEALER POPUP
+// ══════════════════════════════════════════════════════════════════════════
 function showDealerPopup(p) {
     popup.setOptions({
         position: [p.Longitude, p.Latitude],
@@ -479,139 +753,6 @@ function showDealerPopup(p) {
         </div>`
     });
     popup.open(map);
-}
-
-// ── Refresh map ───────────────────────────────────────────────────────────
-function refreshMap() {
-    if (!countySource || !dealerSource) return;
-    const filtered = getFiltered();
-
-    countySource.clear();
-    const features = buildCountyFeatures(filtered);
-    if (features.length) countySource.add(features);
-
-    dealerSource.clear();
-    filtered.forEach(d => {
-        dealerSource.add(new atlas.data.Feature(
-            new atlas.data.Point([parseFloat(d.Longitude), parseFloat(d.Latitude)]), d
-        ));
-    });
-}
-
-// ── Apply filters ─────────────────────────────────────────────────────────
-function applyFilters() {
-    const state = document.getElementById('stateFilter').value;
-    if (state) {
-        const cs = new Set();
-        dealerData.filter(d => d.State === state).forEach(d => { if (d.County) cs.add(d.County); });
-        populateDD('countyFilter', cs);
-    } else {
-        populateDD('countyFilter', allCounties);
-    }
-    refreshMap();
-    updateStats();
-    updateRBMList();
-    zoomToFiltered();
-}
-
-// ── Get filtered dealers — always validates coords before returning ────────
-function getFiltered() {
-    const nation    = document.getElementById('nationFilter').value;
-    const state     = document.getElementById('stateFilter').value;
-    const county    = document.getElementById('countyFilter').value;
-    const territory = document.getElementById('territoryFilter').value;
-    const rbm       = document.getElementById('rbmFilter').value;
-    const segment   = document.getElementById('segmentFilter').value;
-    const product   = document.getElementById('productFilter').value;
-
-    return dealerData.filter(d =>
-        isValidCoord(d.Latitude, d.Longitude) &&   // <-- always sanity-check coords
-        (!nation    || d.Nation         === nation)    &&
-        (!state     || d.State          === state)     &&
-        (!county    || d.County         === county)    &&
-        (!territory || d.Territory      === territory) &&
-        (!rbm       || d.RBM            === rbm)       &&
-        (!segment   || d.Segment        === segment)   &&
-        (!product   || d.Product_Level2 === product)
-    );
-}
-
-// ── Zoom to filtered — with Americas sanity clamp ─────────────────────────
-function zoomToFiltered() {
-    const f = getFiltered();
-
-    // If nothing valid, just reset to North America default
-    if (!f.length) {
-        resetView();
-        return;
-    }
-
-    if (f.length === 1) {
-        map.setCamera({
-            center: [parseFloat(f[0].Longitude), parseFloat(f[0].Latitude)],
-            zoom: 10,
-            type: 'ease',
-            duration: 1000
-        });
-        return;
-    }
-
-    // Build bounding box only from valid coordinates
-    const lons = f.map(d => parseFloat(d.Longitude));
-    const lats = f.map(d => parseFloat(d.Latitude));
-
-    const minLon = Math.max(Math.min(...lons), AMERICAS_LON_MIN);
-    const maxLon = Math.min(Math.max(...lons), AMERICAS_LON_MAX);
-    const minLat = Math.max(Math.min(...lats), AMERICAS_LAT_MIN);
-    const maxLat = Math.min(Math.max(...lats), AMERICAS_LAT_MAX);
-
-    // Extra sanity: if the resulting box is still nonsense, reset
-    if (minLon >= maxLon || minLat >= maxLat) {
-        resetView();
-        return;
-    }
-
-    const bounds = [minLon, minLat, maxLon, maxLat];
-    map.setCamera({ bounds, padding: 80, type: 'ease', duration: 1000 });
-}
-
-// ── Stats & RBM list ──────────────────────────────────────────────────────
-function updateStats() {
-    const f = getFiltered();
-    document.getElementById('totalDealers').textContent  = f.length;
-    document.getElementById('totalQuantity').textContent = f.reduce((s,d) => s+(d.MFG_Quantity||0), 0).toLocaleString();
-}
-
-function updateRBMList() {
-    const f = getFiltered();
-    const rbms = [...new Set(f.map(d => d.RBM))].sort();
-    const el = document.getElementById('rbmList');
-    el.innerHTML = '';
-    if (!rbms.length) {
-        const li = document.createElement('li');
-        li.textContent = 'No RBMs in filter';
-        li.style.cssText = 'font-style:italic;color:#999';
-        el.appendChild(li);
-        return;
-    }
-    rbms.forEach(r => {
-        const cnt = f.filter(d => d.RBM === r).length;
-        const qty = f.filter(d => d.RBM === r).reduce((s,d) => s+(d.MFG_Quantity||0), 0);
-        const li = document.createElement('li');
-        li.innerHTML = `<strong>${r}</strong><br><small>${cnt} dealers · ${qty.toLocaleString()} units</small>`;
-        el.appendChild(li);
-    });
-}
-
-// ── Toggle layers ─────────────────────────────────────────────────────────
-function toggleLayer(type) {
-    if (type === 'county') {
-        const v = document.getElementById('toggleCounty').checked;
-        countyFillLayer.setOptions({ visible: v });
-        countyLineLayer.setOptions({ visible: v });
-    }
-    if (type === 'pins')   dealerLayer.setOptions({ visible: document.getElementById('togglePins').checked });
-    if (type === 'labels') labelLayer.setOptions({  visible: document.getElementById('toggleLabels').checked });
 }
 
 </script>
