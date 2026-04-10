@@ -8,51 +8,69 @@
 <style>
     html, body { height: 100%; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     .container { display: flex; flex-direction: column; height: 100%; }
-    .filter-panel { padding: 4px 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: flex; flex-wrap: wrap; gap: 6px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); align-items: center; }
+
+    .filter-panel {
+        padding: 4px 10px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        align-items: center;
+    }
     .filter-group { min-width: 120px; }
     .filter-group label { display: block; margin-bottom: 2px; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; }
     .filter-group select { width: 100%; padding: 4px 6px; border: none; border-radius: 5px; font-size: 12px; background: white; cursor: pointer; }
+
     .info-panel { background: white; padding: 6px 10px; border-radius: 6px; min-width: 130px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
     .info-panel h4 { margin: 0 0 4px 0; color: #667eea; font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; }
     #rbmList { list-style: none; padding: 0; margin: 0; max-height: 60px; overflow-y: auto; }
     #rbmList li { padding: 2px 0; font-size: 11px; color: #333; border-bottom: 1px solid #eee; }
     #rbmList li:last-child { border-bottom: none; }
+
     .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; }
     .stat-item { background: #f8f9fa; padding: 4px 6px; border-radius: 5px; text-align: center; }
     .stat-value { font-size: 16px; font-weight: bold; color: #667eea; }
     .stat-label { font-size: 9px; color: #666; text-transform: uppercase; margin-top: 2px; }
+
     #myMap { flex: 1; width: 100%; position: relative; }
+
     .zoom-controls { position: absolute; top: 20px; left: 20px; display: flex; flex-direction: column; gap: 6px; z-index: 10; }
     .zoom-btn { width: 38px; height: 38px; background: white; border: none; border-radius: 6px; font-size: 20px; font-weight: bold; color: #444; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; transition: all 0.15s ease; line-height: 1; }
     .zoom-btn:hover { background: #667eea; color: white; transform: scale(1.08); }
     .zoom-btn.reset { font-size: 13px; font-weight: 600; }
     .zoom-divider { width: 38px; height: 1px; background: #ddd; margin: 2px 0; }
     .zoom-level-display { width: 38px; height: 24px; background: rgba(255,255,255,0.9); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: #555; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+
     .style-switcher { position: absolute; top: 20px; left: 70px; background: white; padding: 10px 12px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 10; }
     .style-switcher label { font-size: 11px; font-weight: 700; color: #667eea; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 6px; }
     .style-btn-group { display: flex; gap: 5px; }
     .style-btn { padding: 5px 10px; border: 1.5px solid #ddd; border-radius: 5px; background: white; font-size: 12px; cursor: pointer; color: #555; white-space: nowrap; }
     .style-btn:hover { border-color: #667eea; color: #667eea; }
     .style-btn.active { background: #667eea; border-color: #667eea; color: white; font-weight: 600; }
-    .map-controls { position: absolute; bottom: 195px; left: 20px; background: white; padding: 8px 10px; border-radius: 7px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 10; min-width: 155px; }
+
+    .map-controls { position: absolute; bottom: 200px; left: 20px; background: white; padding: 8px 10px; border-radius: 7px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 10; min-width: 155px; }
     .map-controls h4 { margin: 0 0 6px 0; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #667eea; }
     .toggle-group { display: flex; flex-direction: column; gap: 4px; }
     .toggle-item { display: flex; align-items: center; gap: 6px; }
     .toggle-item input[type="checkbox"] { width: 13px; height: 13px; cursor: pointer; }
     .toggle-item label { font-size: 11px; cursor: pointer; user-select: none; color: #333; }
+
     .map-legend { position: absolute; bottom: 20px; left: 20px; background: white; padding: 8px 10px; border-radius: 7px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 10; min-width: 170px; }
     .map-legend h4 { margin: 0 0 5px 0; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #667eea; }
     .legend-item { display: flex; align-items: center; margin: 3px 0; font-size: 10px; color: #444; }
+    .legend-color { width: 20px; height: 10px; margin-right: 7px; border-radius: 2px; flex-shrink: 0; }
     .legend-dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 7px; flex-shrink: 0; }
     .legend-divider { border: none; border-top: 1px solid #eee; margin: 5px 0; }
-    .legend-ramp { display: flex; align-items: center; gap: 3px; margin-bottom: 4px; }
-    .ramp-swatch { width: 18px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
     .loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
     .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
     @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
     .loading-text { margin-top: 20px; font-size: 18px; color: #667eea; font-weight: 600; }
     .loading-sub { margin-top: 8px; font-size: 13px; color: #999; }
     .hidden { display: none; }
+
     .popup-content { font-size: 13px; padding: 5px; max-width: 290px; }
     .popup-content h3 { margin: 0 0 8px 0; color: #667eea; font-size: 15px; border-bottom: 2px solid #667eea; padding-bottom: 4px; }
     .popup-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #eee; gap: 10px; }
@@ -63,6 +81,7 @@
 </head>
 <body>
 <div class="container">
+
     <div class="filter-panel">
         <div class="filter-group"><label>Nation</label><select id="nationFilter" onchange="applyFilters()"><option value="">All Nations</option></select></div>
         <div class="filter-group"><label>State / Region</label><select id="stateFilter" onchange="applyFilters()"><option value="">All States</option></select></div>
@@ -90,6 +109,7 @@
             <div class="zoom-divider"></div>
             <button class="zoom-btn reset" onclick="resetView()">⌂</button>
         </div>
+
         <div class="style-switcher">
             <label>Map Style</label>
             <div class="style-btn-group">
@@ -98,27 +118,27 @@
                 <button class="style-btn" id="btnDark" onclick="setMapStyle('night')">Dark</button>
             </div>
         </div>
+
         <div class="map-controls">
             <h4>Map Layers</h4>
             <div class="toggle-group">
-                <div class="toggle-item"><input type="checkbox" id="toggleCounty" checked onchange="toggleLayer('county')"><label for="toggleCounty">County Choropleth</label></div>
+                <div class="toggle-item"><input type="checkbox" id="toggleHeat" checked onchange="toggleLayer('heat')"><label for="toggleHeat">Sales Heat Map</label></div>
+                <div class="toggle-item"><input type="checkbox" id="toggleCountyLines" checked onchange="toggleLayer('countyLines')"><label for="toggleCountyLines">County Lines</label></div>
                 <div class="toggle-item"><input type="checkbox" id="togglePins" checked onchange="toggleLayer('pins')"><label for="togglePins">Dealer Pins</label></div>
                 <div class="toggle-item"><input type="checkbox" id="toggleLabels" onchange="toggleLayer('labels')"><label for="toggleLabels">Dealer Labels</label></div>
             </div>
         </div>
+
         <div class="map-legend">
-            <h4>Legend</h4>
-            <div style="font-size:10px;color:#888;margin-bottom:3px;">County Sales Intensity</div>
-            <div class="legend-ramp">
-                <div class="ramp-swatch" style="background:#fde8e8;"></div>
-                <div class="ramp-swatch" style="background:#f4a0a0;"></div>
-                <div class="ramp-swatch" style="background:#d45a5a;"></div>
-                <div class="ramp-swatch" style="background:#8b0000;"></div>
-                <span style="font-size:10px;color:#444;margin-left:3px;">Low → High</span>
-            </div>
+            <h4>Heat Map Legend</h4>
+            <div class="legend-item"><div class="legend-color" style="background:rgba(139,0,0,1);"></div><span>High Sales (&gt;100 units)</span></div>
+            <div class="legend-item"><div class="legend-color" style="background:rgba(220,100,100,0.85);"></div><span>Medium (50–100 units)</span></div>
+            <div class="legend-item"><div class="legend-color" style="background:rgba(255,180,180,0.75);"></div><span>Low (10–50 units)</span></div>
+            <div class="legend-item"><div class="legend-color" style="background:rgba(255,220,220,0.6);"></div><span>Very Low (&lt;10 units)</span></div>
             <hr class="legend-divider">
             <div class="legend-item"><div class="legend-dot" style="background:#1a73e8;border:2px solid #0d47a1;"></div><span>Dealer Branch</span></div>
         </div>
+
         <div id="loadingOverlay" class="loading-overlay">
             <div class="loading-spinner"></div>
             <div class="loading-text" id="loadingText">Loading AEM data…</div>
@@ -137,30 +157,11 @@ const DEFAULT_ZOOM   = 3.5;
 const MIN_ZOOM = 2.5, MAX_ZOOM = 18;
 const NA_BOUNDS = [-168, 24, -52, 72.5];
 
+// County boundary GeoJSON (lines only — same source as territory map)
 const COUNTY_GEOJSON_URL = 'https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json';
 const CANADA_GEOJSON_URL = 'https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/canada.geojson';
 
-// FIPS → state abbreviation  (keys are STRINGS with leading zero)
-const FIPS_TO_STATE = {
-    '01':'AL','02':'AK','04':'AZ','05':'AR','06':'CA','08':'CO','09':'CT',
-    '10':'DE','11':'DC','12':'FL','13':'GA','15':'HI','16':'ID','17':'IL',
-    '18':'IN','19':'IA','20':'KS','21':'KY','22':'LA','23':'ME','24':'MD',
-    '25':'MA','26':'MI','27':'MN','28':'MS','29':'MO','30':'MT','31':'NE',
-    '32':'NV','33':'NH','34':'NJ','35':'NM','36':'NY','37':'NC','38':'ND',
-    '39':'OH','40':'OK','41':'OR','42':'PA','44':'RI','45':'SC','46':'SD',
-    '47':'TN','48':'TX','49':'UT','50':'VT','51':'VA','53':'WA','54':'WV',
-    '55':'WI','56':'WY'
-};
-
-const CANADA_PROV_TO_ABBR = {
-    'Ontario':'ON','Quebec':'QC','Québec':'QC','British Columbia':'BC','Alberta':'AB',
-    'Saskatchewan':'SK','Manitoba':'MB','New Brunswick':'NB','Nova Scotia':'NS',
-    'Newfoundland and Labrador':'NL','Newfoundland':'NL',
-    'Prince Edward Island':'PE','Northwest Territories':'NT','Yukon':'YT','Nunavut':'NU'
-};
-
 const STATE_NAME_TO_ABBR = {
-    ...CANADA_PROV_TO_ABBR,
     'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA',
     'Colorado':'CO','Connecticut':'CT','Delaware':'DE','Florida':'FL','Georgia':'GA',
     'Hawaii':'HI','Idaho':'ID','Illinois':'IL','Indiana':'IN','Iowa':'IA',
@@ -171,18 +172,20 @@ const STATE_NAME_TO_ABBR = {
     'North Dakota':'ND','Ohio':'OH','Oklahoma':'OK','Oregon':'OR','Pennsylvania':'PA',
     'Rhode Island':'RI','South Carolina':'SC','South Dakota':'SD','Tennessee':'TN',
     'Texas':'TX','Utah':'UT','Vermont':'VT','Virginia':'VA','Washington':'WA',
-    'West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY','District of Columbia':'DC'
+    'West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY','District of Columbia':'DC',
+    'Ontario':'ON','Quebec':'QC','Québec':'QC','British Columbia':'BC','Alberta':'AB',
+    'Saskatchewan':'SK','Manitoba':'MB','New Brunswick':'NB','Nova Scotia':'NS',
+    'Newfoundland and Labrador':'NL','Newfoundland':'NL','Prince Edward Island':'PE',
+    'Northwest Territories':'NT','Yukon':'YT','Nunavut':'NU'
 };
 
 let dealerData = [];
-let allCountyGeoFeatures = [];
-let allCanadaGeoFeatures = [];
-let map, countySource, dealerSource;
-let countyFillLayer, countyBorderLayer, dealerLayer, labelLayer, popup;
+let map, dealerSource, countyLineSource;
+let heatLayer, dealerLayer, labelLayer, countyLineLayer, canadaLineLayer, popup;
 let allNations=new Set(), allStates=new Set(), allCounties=new Set();
 let allTerritories=new Set(), allRBMs=new Set(), allSegments=new Set(), allProducts=new Set();
 
-// ── Map ────────────────────────────────────────────────────────────────────
+// ── Map Init ───────────────────────────────────────────────────────────────
 map = new atlas.Map('myMap', {
     center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM,
     minZoom: MIN_ZOOM, maxZoom: MAX_ZOOM, maxBounds: NA_BOUNDS,
@@ -201,15 +204,18 @@ document.addEventListener('keydown',e=>{
     if(e.key==='-'||e.key==='_') zoomOut();
     if(e.key==='0') resetView();
 });
-function setMapStyle(s){ map.setStyle({style:s}); document.getElementById('btnStreet').classList.toggle('active',s==='road'); document.getElementById('btnSatellite').classList.toggle('active',s==='satellite_road_labels'); document.getElementById('btnDark').classList.toggle('active',s==='night'); }
+function setMapStyle(s){
+    map.setStyle({style:s});
+    document.getElementById('btnStreet').classList.toggle('active',s==='road');
+    document.getElementById('btnSatellite').classList.toggle('active',s==='satellite_road_labels');
+    document.getElementById('btnDark').classList.toggle('active',s==='night');
+}
 
-function isValidCoord(lat,lon){ if(lat==null||lon==null) return false; const la=parseFloat(lat),lo=parseFloat(lon); if(isNaN(la)||isNaN(lo)||(la===0&&lo===0)) return false; return lo>=-170&&lo<=-30&&la>=-60&&la<=75; }
-
-function lerp(a,b,t){ return Math.round(a+(b-a)*Math.min(1,Math.max(0,t))); }
-function normToColor(n){
-    const s=[[0,[253,232,232],0.75],[0.25,[244,160,160],0.82],[0.5,[212,90,90],0.87],[0.75,[178,34,34],0.92],[1,[139,0,0],0.96]];
-    for(let i=0;i<s.length-1;i++){const[t0,c0,a0]=s[i],[t1,c1,a1]=s[i+1];if(n<=t1){const t=(n-t0)/(t1-t0);return `rgba(${lerp(c0[0],c1[0],t)},${lerp(c0[1],c1[1],t)},${lerp(c0[2],c1[2],t)},${(a0+(a1-a0)*t).toFixed(2)})`;}}
-    return 'rgba(139,0,0,0.96)';
+function isValidCoord(lat,lon){
+    if(lat==null||lon==null) return false;
+    const la=parseFloat(lat),lo=parseFloat(lon);
+    if(isNaN(la)||isNaN(lo)||(la===0&&lo===0)) return false;
+    return lo>=-170&&lo<=-30&&la>=-60&&la<=75;
 }
 
 // ── Fetch ──────────────────────────────────────────────────────────────────
@@ -218,19 +224,23 @@ async function fetchAEMData(){
         const res=await fetch(API_ENDPOINT,{method:'GET',headers:{'Content-Type':'application/json'}});
         if(!res.ok) throw new Error('HTTP '+res.status);
         const d=await res.json(); return d.results||d;
-    }catch(e){ console.warn('[AEM] Sample data:', e.message); return getSampleData(); }
+    }catch(e){ console.warn('[AEM] Sample data fallback:', e.message); return getSampleData(); }
 }
+
 function getSampleData(){
     return [
         {Nation:'United States',State:'California',County:'Santa Cruz, CA',Territory:'West',RBM:'Glenn Young',MFG_Quantity:87,ParentDealerId:'DLR001',ParentDealerName:'Pacific Equipment',Segment:'Construction',Product_Level2:'Wheel Loaders',Summary:'Full Line Dealer',Latitude:36.9741,Longitude:-122.0308},
         {Nation:'United States',State:'Arizona',County:'Yavapai, AZ',Territory:'West',RBM:'Glenn Young',MFG_Quantity:134,ParentDealerId:'DLR002',ParentDealerName:'Desert Machinery',Segment:'Mining',Product_Level2:'Wheel Loaders',Summary:'Full Line Dealer',Latitude:34.54,Longitude:-112.4685},
         {Nation:'United States',State:'Florida',County:'Volusia, FL',Territory:'South',RBM:'William Swartz',MFG_Quantity:56,ParentDealerId:'DLR003',ParentDealerName:'Florida Equipment',Segment:'Construction',Product_Level2:'Wheel Loaders',Summary:'Specialty Dealer',Latitude:29.028,Longitude:-81.0998},
-        {Nation:'United States',State:'Idaho',County:'Blaine, ID',Territory:'West',RBM:'Glenn Young',MFG_Quantity:43,ParentDealerId:'DLR004',ParentDealerName:'Idaho Machinery',Segment:'Agriculture',Product_Level2:'Wheel Loaders',Summary:'Specialty Dealer',Latitude:43.5,Longitude:-114.35},
-        {Nation:'United States',State:'Iowa',County:'Wapello, IA',Territory:'Midwest',RBM:'Paul Kindelspire',MFG_Quantity:72,ParentDealerId:'DLR005',ParentDealerName:'Heartland Equipment',Segment:'Agriculture',Product_Level2:'Wheel Loaders',Summary:'Full Line Dealer',Latitude:41.02,Longitude:-92.41}
+        {Nation:'United States',State:'Iowa',County:'Wapello, IA',Territory:'Midwest',RBM:'Paul Kindelspire',MFG_Quantity:72,ParentDealerId:'DLR005',ParentDealerName:'Heartland Equipment',Segment:'Agriculture',Product_Level2:'Wheel Loaders',Summary:'Full Line Dealer',Latitude:41.02,Longitude:-92.41},
+        {Nation:'United States',State:'Illinois',County:'Cook, IL',Territory:'Midwest',RBM:'Paul Kindelspire',MFG_Quantity:198,ParentDealerId:'DLR006',ParentDealerName:'Midwest Machinery',Segment:'Construction',Product_Level2:'Wheel Loaders',Summary:'Full Line Dealer',Latitude:41.878,Longitude:-87.63},
+        {Nation:'United States',State:'Texas',County:'Dallas, TX',Territory:'South',RBM:'William Swartz',MFG_Quantity:245,ParentDealerId:'DLR007',ParentDealerName:'Texas Equipment Co',Segment:'Construction',Product_Level2:'Wheel Loaders',Summary:'Full Line Dealer',Latitude:32.7767,Longitude:-96.797},
+        {Nation:'Canada',State:'Alberta',County:'Rocky View County, AB',Territory:'Canada',RBM:'Quoc Nguyen',MFG_Quantity:156,ParentDealerId:'DLR011',ParentDealerName:'Alberta Machinery',Segment:'Mining',Product_Level2:'Wheel Loaders',Summary:'Full Line Dealer',Latitude:51.1784,Longitude:-114.1744},
+        {Nation:'Canada',State:'Ontario',County:'Toronto, ON',Territory:'Canada',RBM:'Quoc Nguyen',MFG_Quantity:125,ParentDealerId:'DLR012',ParentDealerName:'Ontario Equipment',Segment:'Construction',Product_Level2:'Wheel Loaders',Summary:'Full Line Dealer',Latitude:43.6532,Longitude:-79.3832}
     ];
 }
 
-// ── Aggregate ──────────────────────────────────────────────────────────────
+// ── Aggregate by dealer ────────────────────────────────────────────────────
 function aggregateByDealer(raw){
     const m=new Map();
     raw.forEach(r=>{
@@ -238,138 +248,35 @@ function aggregateByDealer(raw){
         if(!isValidCoord(lat,lon)) return;
         const key=`${r.ParentDealerId}|${lat.toFixed(4)}|${lon.toFixed(4)}`;
         if(m.has(key)){ m.get(key).MFG_Quantity+=(parseFloat(r.MFG_Quantity)||0); }
-        else m.set(key,{Latitude:lat,Longitude:lon,MFG_Quantity:parseFloat(r.MFG_Quantity)||0,
-            State:r.State||'',County:r.County||'',Nation:r.Nation||'',Territory:r.Territory||'',
-            RBM:r.RBM||'',ParentDealerId:r.ParentDealerId||'',ParentDealerName:r.ParentDealerName||'',
-            Segment:r.Segment||'',Product_Level2:r.Product_Level2||'',Summary:r.Summary||''});
+        else m.set(key,{
+            Latitude:lat, Longitude:lon, MFG_Quantity:parseFloat(r.MFG_Quantity)||0,
+            State:r.State||'', County:r.County||'', Nation:r.Nation||'',
+            Territory:r.Territory||'', RBM:r.RBM||'',
+            ParentDealerId:r.ParentDealerId||'', ParentDealerName:r.ParentDealerName||'',
+            Segment:r.Segment||'', Product_Level2:r.Product_Level2||'', Summary:r.Summary||''
+        });
     });
     return Array.from(m.values());
 }
 
-// ── Build sales lookup — keyed "STATEABBR|COUNTYNAME_UPPER" ───────────────
-// County field format: "Santa Cruz, CA"  →  stateAbbr="CA", name="SANTA CRUZ"
-// CRITICAL: use ONLY the 2-letter suffix from County field, never the State field.
-function buildCountySalesMap(filtered){
-    const s={};
-    filtered.forEach(d=>{
-        const raw=(d.County||'').trim();
-        const m=raw.match(/^(.+),\s*([A-Za-z]{2})$/);
-        if(m){
-            const name=m[1].toUpperCase().trim();
-            const abbr=m[2].toUpperCase();
-            // Store ONLY the base key — no duplicates with suffixes
-            const k=`${abbr}|${name}`;
-            s[k]=(s[k]||0)+(d.MFG_Quantity||0);
-        } else {
-            // Canada — no ", XX" suffix
-            const provAbbr=CANADA_PROV_TO_ABBR[d.State]||STATE_NAME_TO_ABBR[d.State]||'';
-            if(provAbbr){ const k=`CA_PROV|${provAbbr}`; s[k]=(s[k]||0)+(d.MFG_Quantity||0); }
-        }
-    });
-    console.log('[AEM] salesMap entries:',Object.keys(s).length,'  first 6:',Object.keys(s).slice(0,6));
-    return s;
-}
-
-// ── Get state abbreviation from a GeoJSON county feature ──────────────────
-// The plotly GeoJSON has: properties.STATE (numeric string like "06") and properties.GEO_ID ("0500000US06001")
-function getStateAbbrFromFeature(props){
-    // Try props.STATE first — could be number or string
-    if(props.STATE!==undefined&&props.STATE!==null){
-        const fips=String(props.STATE).padStart(2,'0');
-        const abbr=FIPS_TO_STATE[fips];
-        if(abbr) return abbr;
-    }
-    // Try GEO_ID: "0500000US06001" — chars 9-10 are state FIPS
-    if(props.GEO_ID){
-        const geo=String(props.GEO_ID);
-        // Format: "0500000US" + 2-digit state + 3-digit county
-        const usPart=geo.indexOf('US');
-        if(usPart>=0){
-            const fips=geo.slice(usPart+2,usPart+4);
-            const abbr=FIPS_TO_STATE[fips];
-            if(abbr) return abbr;
-        }
-    }
-    // Try id field at feature level (some GeoJSON versions)
-    return null;
-}
-
-// ── Paint choropleth ───────────────────────────────────────────────────────
-function paintCountyChoropleth(filtered){
-    if(!countySource) return;
-    const salesMap=buildCountySalesMap(filtered);
-    const maxQty=Math.max(1,...Object.values(salesMap));
-    const colored=[];
-    let matched=0, skipped=0, noState=0;
-
-    // Debug: inspect first GeoJSON feature to understand property structure
-    if(allCountyGeoFeatures.length>0){
-        const sample=allCountyGeoFeatures[0].properties;
-        console.log('[AEM] GeoJSON sample feature props:', JSON.stringify(sample));
-        // Also try to match Santa Cruz CA manually
-        const testAbbr=getStateAbbrFromFeature(sample);
-        console.log('[AEM] Test state abbr from sample:', testAbbr, '| NAME:', sample.NAME);
-    }
-
-    for(const feat of allCountyGeoFeatures){
-        const props=feat.properties||{};
-        const stateAbbr=getStateAbbrFromFeature(props);
-        if(!stateAbbr){ noState++; continue; }
-
-        const geoName=(props.NAME||'').toUpperCase().trim();
-
-        // Build lookup candidates — base name and common GeoJSON suffix variants
-        const candidates=[
-            `${stateAbbr}|${geoName}`,
-            `${stateAbbr}|${geoName.replace(/ COUNTY$/,'')}`,
-            `${stateAbbr}|${geoName.replace(/ PARISH$/,'')}`,
-            `${stateAbbr}|${geoName.replace(/ BOROUGH$/,'')}`,
-            `${stateAbbr}|${geoName.replace(/ CENSUS AREA$/,'')}`,
-            `${stateAbbr}|${geoName.replace(/^ST\. /,'SAINT ')}`,
-            `${stateAbbr}|${geoName.replace(/^SAINT /,'ST. ')}`
-        ];
-
-        let qty=0;
-        for(const c of candidates){ if(salesMap[c]){qty=salesMap[c];break;} }
-        if(qty===0){ skipped++; continue; }
-
-        matched++;
-        colored.push({...feat, properties:{...props,qty,fillColor:normToColor(qty/maxQty),displayName:props.NAME,stateAbbr}});
-    }
-
-    // Canada
-    for(const feat of allCanadaGeoFeatures){
-        const props=feat.properties||{};
-        const prov=(props.name||'').trim();
-        const abbr=CANADA_PROV_TO_ABBR[prov]||'';
-        if(!abbr) continue;
-        const qty=salesMap[`CA_PROV|${abbr}`]||0;
-        if(qty===0) continue;
-        matched++;
-        colored.push({...feat,properties:{...props,qty,fillColor:normToColor(qty/maxQty),displayName:prov,stateAbbr:abbr}});
-    }
-
-    countySource.clear();
-    if(colored.length>0) countySource.add({type:'FeatureCollection',features:colored});
-    console.log(`[AEM] Choropleth: ${matched} shaded | ${skipped} no-sales | ${noState} no-state-match`);
-}
-
-// ── Load boundaries ────────────────────────────────────────────────────────
-async function loadBoundaries(){
+// ── Load county boundary lines ─────────────────────────────────────────────
+async function loadCountyLines(){
     try{
-        setSub('Loading US county boundaries…');
+        setSub('Loading US county lines…');
         const r=await fetch(COUNTY_GEOJSON_URL);
         const g=await r.json();
-        allCountyGeoFeatures=g.features||[];
-        console.log('[AEM] US county features:',allCountyGeoFeatures.length,'  Sample props:',JSON.stringify(allCountyGeoFeatures[0]?.properties));
-    }catch(e){console.error('[AEM] County GeoJSON failed:',e);}
+        // Add all US county polygons as outlines only
+        countyLineSource.add(g);
+        console.log('[AEM] US county lines loaded:', (g.features||[]).length);
+    }catch(e){ console.error('[AEM] County lines failed:',e); }
+
     try{
-        setSub('Loading Canada boundaries…');
+        setSub('Loading Canada province lines…');
         const r=await fetch(CANADA_GEOJSON_URL);
         const g=await r.json();
-        allCanadaGeoFeatures=(g.features||[]).map(f=>({...f,properties:{...f.properties,name:f.properties.name||f.properties.NAME||''}}));
-        console.log('[AEM] Canada features:',allCanadaGeoFeatures.length);
-    }catch(e){console.error('[AEM] Canada GeoJSON failed:',e);}
+        countyLineSource.add(g);
+        console.log('[AEM] Canada lines loaded:', (g.features||[]).length);
+    }catch(e){ console.error('[AEM] Canada lines failed:',e); }
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
@@ -377,7 +284,7 @@ async function initializeApp(){
     setLoadingText('Fetching AEM sales data…');
     const raw=await fetchAEMData();
     dealerData=aggregateByDealer(raw);
-    console.log('[AEM] Dealers:',dealerData.length,'  Sample county fields:',dealerData.slice(0,3).map(d=>d.County+'|'+d.State));
+    console.log('[AEM] Dealers:',dealerData.length);
 
     dealerData.forEach(d=>{
         if(d.Nation)         allNations.add(d.Nation);
@@ -391,13 +298,14 @@ async function initializeApp(){
     populateFilters();
 
     setLoadingText('Loading county boundaries…');
-    await loadBoundaries();
+    await loadCountyLines();
+
     document.getElementById('loadingOverlay').classList.add('hidden');
     refreshMap(); updateStats(); updateRBMList();
 }
 
-function setLoadingText(t){document.getElementById('loadingText').textContent=t;}
-function setSub(t){document.getElementById('loadingSub').textContent=t;}
+function setLoadingText(t){ document.getElementById('loadingText').textContent=t; }
+function setSub(t){ document.getElementById('loadingSub').textContent=t; }
 
 function populateFilters(){
     populateDD('nationFilter',allNations); populateDD('stateFilter',allStates);
@@ -408,76 +316,124 @@ function populateFilters(){
 function populateDD(id,set){
     const sel=document.getElementById(id),cur=sel.value,first=sel.options[0];
     sel.innerHTML=''; sel.appendChild(first);
-    [...set].sort().forEach(v=>{const o=document.createElement('option');o.value=o.textContent=v;if(v===cur)o.selected=true;sel.appendChild(o);});
+    [...set].sort().forEach(v=>{ const o=document.createElement('option'); o.value=o.textContent=v; if(v===cur)o.selected=true; sel.appendChild(o); });
 }
 
 // ── Map Ready ──────────────────────────────────────────────────────────────
-map.events.add('ready',async()=>{
-    countySource=new atlas.source.DataSource(null,{cluster:false});
-    map.sources.add(countySource);
+map.events.add('ready', async()=>{
 
-    countyFillLayer=new atlas.layer.PolygonLayer(countySource,'countyFill',{fillColor:['get','fillColor'],fillOpacity:1});
-    map.layers.add(countyFillLayer,'labels');
+    // ── County outline source (lines only, no fill) ──────────────────────
+    countyLineSource = new atlas.source.DataSource(null,{cluster:false});
+    map.sources.add(countyLineSource);
 
-    countyBorderLayer=new atlas.layer.LineLayer(countySource,'countyBorder',{strokeColor:'rgba(80,100,130,0.3)',strokeWidth:0.7});
-    map.layers.add(countyBorderLayer,'labels');
+    countyLineLayer = new atlas.layer.LineLayer(countyLineSource,'countyLines',{
+        strokeColor: 'rgba(80,100,130,0.35)',
+        strokeWidth: 0.6,
+        // Only show at zoom 5+ to avoid clutter at country level
+        minZoom: 4
+    });
+    map.layers.add(countyLineLayer,'labels');
 
-    dealerSource=new atlas.source.DataSource();
+    // ── Dealer data source (heat map + pins share this) ──────────────────
+    dealerSource = new atlas.source.DataSource();
     map.sources.add(dealerSource);
 
-    dealerLayer=new atlas.layer.BubbleLayer(dealerSource,'dealerBubble',{radius:8,color:'#1a73e8',strokeColor:'#0d47a1',strokeWidth:2,opacity:0.95});
+    // Heat map — weighted by MFG_Quantity
+    heatLayer = new atlas.layer.HeatMapLayer(dealerSource, null, {
+        weight: [
+            'interpolate', ['linear'],
+            ['get','MFG_Quantity'],
+            0, 0,
+            50, 0.4,
+            100, 0.7,
+            300, 1.0
+        ],
+        radius: [
+            'interpolate', ['linear'], ['zoom'],
+            3, 20,
+            6, 35,
+            9, 55
+        ],
+        opacity: 0.8,
+        intensity: 0.7,
+        color: [
+            'interpolate', ['linear'], ['heatmap-density'],
+            0,   'rgba(255,255,255,0)',
+            0.15,'rgba(255,220,220,0.5)',
+            0.35,'rgba(255,180,180,0.72)',
+            0.6, 'rgba(220,100,100,0.85)',
+            0.8, 'rgba(178,34,34,0.93)',
+            1,   'rgba(139,0,0,1)'
+        ]
+    });
+    map.layers.add(heatLayer,'labels');
+
+    // Blue bubble dealer pins (on top of heat map)
+    dealerLayer = new atlas.layer.BubbleLayer(dealerSource,'dealerBubble',{
+        radius: 7,
+        color: '#1a73e8',
+        strokeColor: '#0d47a1',
+        strokeWidth: 2,
+        opacity: 0.95
+    });
     map.layers.add(dealerLayer);
 
-    labelLayer=new atlas.layer.SymbolLayer(dealerSource,'dealerLabel',{
+    // Dealer labels (off by default)
+    labelLayer = new atlas.layer.SymbolLayer(dealerSource,'dealerLabel',{
         iconOptions:{image:'none'},
         textOptions:{textField:['get','ParentDealerName'],offset:[0,1.5],size:11,color:'#000',haloColor:'#fff',haloWidth:2,allowOverlap:false}
     });
     map.layers.add(labelLayer);
     labelLayer.setOptions({visible:false});
 
-    popup=new atlas.Popup({pixelOffset:[0,-12],closeButton:true});
+    popup = new atlas.Popup({pixelOffset:[0,-10],closeButton:true});
 
-    map.events.add('click',dealerLayer,e=>{ if(e.shapes&&e.shapes.length>0) showDealerPopup(e.shapes[0].getProperties()); });
-    map.events.add('click',countyFillLayer,e=>{
-        if(e.shapes&&e.shapes.length>0){
-            const p=e.shapes[0].getProperties();
-            popup.setOptions({position:e.position,content:`<div class="popup-content"><h3>${p.displayName||'County'}, ${p.stateAbbr||''}</h3><div class="popup-row"><span class="popup-label">County Sales:</span><span class="popup-value"><strong>${Number(p.qty||0).toLocaleString()}</strong> units</span></div></div>`});
-            popup.open(map);
-        }
+    map.events.add('click',dealerLayer,e=>{
+        if(e.shapes&&e.shapes.length>0) showDealerPopup(e.shapes[0].getProperties());
     });
-    map.events.add('mouseover',dealerLayer,()=>{map.getCanvasContainer().style.cursor='pointer';});
-    map.events.add('mouseout', dealerLayer,()=>{map.getCanvasContainer().style.cursor='grab';});
-    map.events.add('mouseover',countyFillLayer,()=>{map.getCanvasContainer().style.cursor='crosshair';});
-    map.events.add('mouseout', countyFillLayer,()=>{map.getCanvasContainer().style.cursor='grab';});
+    map.events.add('mouseover',dealerLayer,()=>{ map.getCanvasContainer().style.cursor='pointer'; });
+    map.events.add('mouseout', dealerLayer,()=>{ map.getCanvasContainer().style.cursor='grab'; });
 
     await initializeApp();
 });
 
 // ── Refresh ────────────────────────────────────────────────────────────────
 function refreshMap(){
-    if(!countySource||!dealerSource) return;
-    const f=getFiltered();
-    paintCountyChoropleth(f);
+    if(!dealerSource) return;
+    const filtered=getFiltered();
     dealerSource.clear();
-    f.forEach(d=>{ dealerSource.add(new atlas.data.Feature(new atlas.data.Point([d.Longitude,d.Latitude]),d)); });
+    filtered.forEach(d=>{
+        dealerSource.add(new atlas.data.Feature(
+            new atlas.data.Point([d.Longitude,d.Latitude]), d
+        ));
+    });
 }
 
+// ── Filters ────────────────────────────────────────────────────────────────
 function applyFilters(){
     const state=document.getElementById('stateFilter').value;
-    if(state){const cs=new Set();dealerData.filter(d=>d.State===state).forEach(d=>{if(d.County)cs.add(d.County);});populateDD('countyFilter',cs);}
-    else populateDD('countyFilter',allCounties);
+    if(state){
+        const cs=new Set();
+        dealerData.filter(d=>d.State===state).forEach(d=>{ if(d.County)cs.add(d.County); });
+        populateDD('countyFilter',cs);
+    } else populateDD('countyFilter',allCounties);
     refreshMap(); updateStats(); updateRBMList(); zoomToFiltered();
 }
 
 function getFiltered(){
-    const nation=document.getElementById('nationFilter').value,state=document.getElementById('stateFilter').value,
-          county=document.getElementById('countyFilter').value,territory=document.getElementById('territoryFilter').value,
-          rbm=document.getElementById('rbmFilter').value,segment=document.getElementById('segmentFilter').value,
+    const nation=document.getElementById('nationFilter').value,
+          state=document.getElementById('stateFilter').value,
+          county=document.getElementById('countyFilter').value,
+          territory=document.getElementById('territoryFilter').value,
+          rbm=document.getElementById('rbmFilter').value,
+          segment=document.getElementById('segmentFilter').value,
           product=document.getElementById('productFilter').value;
-    return dealerData.filter(d=>isValidCoord(d.Latitude,d.Longitude)&&
+    return dealerData.filter(d=>
+        isValidCoord(d.Latitude,d.Longitude)&&
         (!nation||d.Nation===nation)&&(!state||d.State===state)&&(!county||d.County===county)&&
-        (!territory||d.Territory===territory)&&(!rbm||d.RBM===rbm)&&(!segment||d.Segment===segment)&&
-        (!product||d.Product_Level2===product));
+        (!territory||d.Territory===territory)&&(!rbm||d.RBM===rbm)&&
+        (!segment||d.Segment===segment)&&(!product||d.Product_Level2===product)
+    );
 }
 
 function zoomToFiltered(){
@@ -498,11 +454,13 @@ function updateStats(){
 }
 
 function updateRBMList(){
-    const f=getFiltered(),rbms=[...new Set(f.map(d=>d.RBM).filter(Boolean))].sort();
+    const f=getFiltered();
+    const rbms=[...new Set(f.map(d=>d.RBM).filter(Boolean))].sort();
     const el=document.getElementById('rbmList'); el.innerHTML='';
     if(!rbms.length){const li=document.createElement('li');li.textContent='No RBMs';li.style.cssText='font-style:italic;color:#999';el.appendChild(li);return;}
     rbms.forEach(r=>{
-        const cnt=f.filter(d=>d.RBM===r).length,qty=f.filter(d=>d.RBM===r).reduce((s,d)=>s+(d.MFG_Quantity||0),0);
+        const cnt=f.filter(d=>d.RBM===r).length;
+        const qty=f.filter(d=>d.RBM===r).reduce((s,d)=>s+(d.MFG_Quantity||0),0);
         const li=document.createElement('li');
         li.innerHTML=`<strong>${r}</strong><br><small>${cnt} dealers · ${qty.toLocaleString()} units</small>`;
         el.appendChild(li);
@@ -510,9 +468,10 @@ function updateRBMList(){
 }
 
 function toggleLayer(t){
-    if(t==='county'){const v=document.getElementById('toggleCounty').checked;countyFillLayer.setOptions({visible:v});countyBorderLayer.setOptions({visible:v});}
-    if(t==='pins')   dealerLayer.setOptions({visible:document.getElementById('togglePins').checked});
-    if(t==='labels') labelLayer.setOptions({visible:document.getElementById('toggleLabels').checked});
+    if(t==='heat')        heatLayer.setOptions({visible:document.getElementById('toggleHeat').checked});
+    if(t==='countyLines'){ countyLineLayer.setOptions({visible:document.getElementById('toggleCountyLines').checked}); }
+    if(t==='pins')        dealerLayer.setOptions({visible:document.getElementById('togglePins').checked});
+    if(t==='labels')      labelLayer.setOptions({visible:document.getElementById('toggleLabels').checked});
 }
 
 function showDealerPopup(p){
