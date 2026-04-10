@@ -50,19 +50,38 @@
     .style-btn:hover { border-color: #667eea; color: #667eea; }
     .style-btn.active { background: #667eea; border-color: #667eea; color: white; font-weight: 600; }
 
-    .map-controls { position: absolute; bottom: 200px; left: 20px; background: white; padding: 8px 10px; border-radius: 7px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 10; min-width: 155px; }
+    .map-controls { position: absolute; bottom: 210px; left: 20px; background: white; padding: 8px 10px; border-radius: 7px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 10; min-width: 155px; }
     .map-controls h4 { margin: 0 0 6px 0; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #667eea; }
     .toggle-group { display: flex; flex-direction: column; gap: 4px; }
     .toggle-item { display: flex; align-items: center; gap: 6px; }
     .toggle-item input[type="checkbox"] { width: 13px; height: 13px; cursor: pointer; }
     .toggle-item label { font-size: 11px; cursor: pointer; user-select: none; color: #333; }
 
-    .map-legend { position: absolute; bottom: 20px; left: 20px; background: white; padding: 8px 10px; border-radius: 7px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 10; min-width: 170px; }
+    .map-legend { position: absolute; bottom: 20px; left: 20px; background: white; padding: 8px 10px; border-radius: 7px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 10; min-width: 180px; }
     .map-legend h4 { margin: 0 0 5px 0; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #667eea; }
+    .legend-ramp { display: flex; align-items: center; height: 12px; border-radius: 3px; overflow: hidden; margin-bottom: 3px; }
+    .legend-ramp-bar { flex: 1; height: 100%; background: linear-gradient(to right, #fce8e8, #e8a0a0, #c04040, #7a0000); }
+    .legend-labels { display: flex; justify-content: space-between; font-size: 9px; color: #888; margin-bottom: 6px; }
     .legend-item { display: flex; align-items: center; margin: 3px 0; font-size: 10px; color: #444; }
-    .legend-color { width: 20px; height: 10px; margin-right: 7px; border-radius: 2px; flex-shrink: 0; }
     .legend-dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 7px; flex-shrink: 0; }
     .legend-divider { border: none; border-top: 1px solid #eee; margin: 5px 0; }
+
+    /* County hover tooltip */
+    #countyTooltip {
+        position: absolute;
+        background: rgba(25,25,45,0.90);
+        color: white;
+        padding: 6px 11px;
+        border-radius: 5px;
+        font-size: 12px;
+        font-weight: 600;
+        pointer-events: none;
+        display: none;
+        z-index: 20;
+        white-space: nowrap;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+        line-height: 1.5;
+    }
 
     .loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
     .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
@@ -71,7 +90,7 @@
     .loading-sub { margin-top: 8px; font-size: 13px; color: #999; }
     .hidden { display: none; }
 
-    .popup-content { font-size: 13px; padding: 5px; max-width: 290px; }
+    .popup-content { font-size: 13px; padding: 5px; max-width: 300px; }
     .popup-content h3 { margin: 0 0 8px 0; color: #667eea; font-size: 15px; border-bottom: 2px solid #667eea; padding-bottom: 4px; }
     .popup-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #eee; gap: 10px; }
     .popup-row:last-child { border-bottom: none; }
@@ -94,13 +113,17 @@
             <h4>Dashboard Stats</h4>
             <div class="stats-grid">
                 <div class="stat-item"><div class="stat-value" id="totalDealers">0</div><div class="stat-label">Dealers</div></div>
-                <div class="stat-item"><div class="stat-value" id="totalQuantity">0</div><div class="stat-label">Units</div></div>
+                <div class="stat-item"><div class="stat-value" id="totalUnits">0</div><div class="stat-label">MFG Units</div></div>
+                <div class="stat-item"><div class="stat-value" id="totalEquipment">0</div><div class="stat-label">Equipment</div></div>
+                <div class="stat-item"><div class="stat-value" id="totalMkt">0</div><div class="stat-label">Mkt Units</div></div>
             </div>
         </div>
         <div class="info-panel"><h4>Active RBMs</h4><ul id="rbmList"></ul></div>
     </div>
 
     <div id="myMap">
+        <div id="countyTooltip"></div>
+
         <div class="zoom-controls">
             <button class="zoom-btn" onclick="zoomIn()">+</button>
             <button class="zoom-btn" onclick="zoomOut()">−</button>
@@ -122,7 +145,7 @@
         <div class="map-controls">
             <h4>Map Layers</h4>
             <div class="toggle-group">
-                <div class="toggle-item"><input type="checkbox" id="toggleHeat" checked onchange="toggleLayer('heat')"><label for="toggleHeat">Sales Heat Map</label></div>
+                <div class="toggle-item"><input type="checkbox" id="toggleChoropleth" checked onchange="toggleLayer('choropleth')"><label for="toggleChoropleth">County Choropleth</label></div>
                 <div class="toggle-item"><input type="checkbox" id="toggleCountyLines" checked onchange="toggleLayer('countyLines')"><label for="toggleCountyLines">County Lines</label></div>
                 <div class="toggle-item"><input type="checkbox" id="togglePins" checked onchange="toggleLayer('pins')"><label for="togglePins">Dealer Pins</label></div>
                 <div class="toggle-item"><input type="checkbox" id="toggleLabels" onchange="toggleLayer('labels')"><label for="toggleLabels">Dealer Labels</label></div>
@@ -130,11 +153,9 @@
         </div>
 
         <div class="map-legend">
-            <h4>Heat Map Legend</h4>
-            <div class="legend-item"><div class="legend-color" style="background:rgba(139,0,0,1);"></div><span>High Sales (&gt;100 units)</span></div>
-            <div class="legend-item"><div class="legend-color" style="background:rgba(220,100,100,0.85);"></div><span>Medium (50–100 units)</span></div>
-            <div class="legend-item"><div class="legend-color" style="background:rgba(255,180,180,0.75);"></div><span>Low (10–50 units)</span></div>
-            <div class="legend-item"><div class="legend-color" style="background:rgba(255,220,220,0.6);"></div><span>Very Low (&lt;10 units)</span></div>
+            <h4>County Sales (MFG Units)</h4>
+            <div class="legend-ramp"><div class="legend-ramp-bar"></div></div>
+            <div class="legend-labels"><span>Low</span><span>High</span></div>
             <hr class="legend-divider">
             <div class="legend-item"><div class="legend-dot" style="background:#1a73e8;border:2px solid #0d47a1;"></div><span>Dealer Branch</span></div>
         </div>
@@ -157,40 +178,128 @@ const DEFAULT_ZOOM   = 3.5;
 const MIN_ZOOM = 2.5, MAX_ZOOM = 18;
 const NA_BOUNDS = [-168, 24, -52, 72.5];
 
-// County boundary GeoJSON (lines only — same source as territory map)
 const COUNTY_GEOJSON_URL = 'https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json';
 const CANADA_GEOJSON_URL = 'https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/canada.geojson';
 
-const STATE_NAME_TO_ABBR = {
-    'Alabama':'AL','Alaska':'AK','Arizona':'AZ','Arkansas':'AR','California':'CA',
-    'Colorado':'CO','Connecticut':'CT','Delaware':'DE','Florida':'FL','Georgia':'GA',
-    'Hawaii':'HI','Idaho':'ID','Illinois':'IL','Indiana':'IN','Iowa':'IA',
-    'Kansas':'KS','Kentucky':'KY','Louisiana':'LA','Maine':'ME','Maryland':'MD',
-    'Massachusetts':'MA','Michigan':'MI','Minnesota':'MN','Mississippi':'MS',
-    'Missouri':'MO','Montana':'MT','Nebraska':'NE','Nevada':'NV','New Hampshire':'NH',
-    'New Jersey':'NJ','New Mexico':'NM','New York':'NY','North Carolina':'NC',
-    'North Dakota':'ND','Ohio':'OH','Oklahoma':'OK','Oregon':'OR','Pennsylvania':'PA',
-    'Rhode Island':'RI','South Carolina':'SC','South Dakota':'SD','Tennessee':'TN',
-    'Texas':'TX','Utah':'UT','Vermont':'VT','Virginia':'VA','Washington':'WA',
-    'West Virginia':'WV','Wisconsin':'WI','Wyoming':'WY','District of Columbia':'DC',
-    'Ontario':'ON','Quebec':'QC','Québec':'QC','British Columbia':'BC','Alberta':'AB',
-    'Saskatchewan':'SK','Manitoba':'MB','New Brunswick':'NB','Nova Scotia':'NS',
-    'Newfoundland and Labrador':'NL','Newfoundland':'NL','Prince Edward Island':'PE',
-    'Northwest Territories':'NT','Yukon':'YT','Nunavut':'NU'
+const FIPS_TO_STATE = {
+    '01':'AL','02':'AK','04':'AZ','05':'AR','06':'CA','08':'CO','09':'CT',
+    '10':'DE','11':'DC','12':'FL','13':'GA','15':'HI','16':'ID','17':'IL',
+    '18':'IN','19':'IA','20':'KS','21':'KY','22':'LA','23':'ME','24':'MD',
+    '25':'MA','26':'MI','27':'MN','28':'MS','29':'MO','30':'MT','31':'NE',
+    '32':'NV','33':'NH','34':'NJ','35':'NM','36':'NY','37':'NC','38':'ND',
+    '39':'OH','40':'OK','41':'OR','42':'PA','44':'RI','45':'SC','46':'SD',
+    '47':'TN','48':'TX','49':'UT','50':'VT','51':'VA','53':'WA','54':'WV',
+    '55':'WI','56':'WY'
 };
 
 let dealerData = [];
-let map, dealerSource, countyLineSource;
-let heatLayer, dealerLayer, labelLayer, countyLineLayer, canadaLineLayer, popup;
+let allCountyFeatures = [];   // raw GeoJSON features (US + Canada)
+let map, choroplethSource, countyLineSource, dealerSource;
+let choroplethFillLayer, choroplethHitLayer, countyLineLayer, dealerLayer, labelLayer, popup;
 let allNations=new Set(), allStates=new Set(), allCounties=new Set();
 let allTerritories=new Set(), allRBMs=new Set(), allSegments=new Set(), allProducts=new Set();
 
+const tooltip = document.getElementById('countyTooltip');
+
+// ── Colour ramp — matches Excel style: white → blush → rose → burgundy ────
+function lerp(a,b,t){ return Math.round(a+(b-a)*Math.max(0,Math.min(1,t))); }
+function normToColor(n){
+    // 4-stop ramp matching the Excel screenshot
+    const stops=[
+        [0,   [252,232,232], 0],    // very light blush (transparent-ish)
+        [0.2, [232,160,160], 0.7],  // light rose
+        [0.5, [192, 80, 80], 0.85], // medium red
+        [0.75,[150, 30, 30], 0.92], // deep red
+        [1.0, [100,  0,  0], 0.97]  // dark burgundy
+    ];
+    for(let i=0;i<stops.length-1;i++){
+        const [t0,c0,a0]=stops[i],[t1,c1,a1]=stops[i+1];
+        if(n<=t1){
+            const t=(n-t0)/(t1-t0);
+            const r=lerp(c0[0],c1[0],t),g=lerp(c0[1],c1[1],t),b=lerp(c0[2],c1[2],t);
+            const a=(a0+(a1-a0)*t).toFixed(2);
+            return `rgba(${r},${g},${b},${a})`;
+        }
+    }
+    return 'rgba(100,0,0,0.97)';
+}
+
+// ── Point-in-polygon (ray casting) ────────────────────────────────────────
+function pointInPolygon(px, py, ring){
+    let inside=false;
+    for(let i=0,j=ring.length-1;i<ring.length;j=i++){
+        const xi=ring[i][0],yi=ring[i][1],xj=ring[j][0],yj=ring[j][1];
+        if(((yi>py)!==(yj>py))&&(px<(xj-xi)*(py-yi)/(yj-yi)+xi)) inside=!inside;
+    }
+    return inside;
+}
+
+function pointInFeature(lon, lat, feat){
+    try{
+        const geom=feat.geometry;
+        if(!geom) return false;
+        if(geom.type==='Polygon'){
+            return pointInPolygon(lon,lat,geom.coordinates[0]);
+        }
+        if(geom.type==='MultiPolygon'){
+            return geom.coordinates.some(poly=>pointInPolygon(lon,lat,poly[0]));
+        }
+    }catch(e){}
+    return false;
+}
+
+// ── Build county label from GeoJSON props ─────────────────────────────────
+function getCountyLabel(props){
+    if(!props) return '';
+    if(props.STATE!==undefined){
+        const fips=String(props.STATE).padStart(2,'0');
+        const abbr=FIPS_TO_STATE[fips]||'';
+        const lsad=(props.LSAD||'').trim();
+        const name=(props.NAME||'').trim();
+        const suffix=lsad&&lsad!=='County'?' '+lsad:' County';
+        return abbr?`${name}${suffix}, ${abbr}`:name;
+    }
+    return props.name||props.NAME||'';
+}
+
+// ── Map dealer lat/lon → GeoJSON county feature via point-in-polygon ──────
+// Returns the index into allCountyFeatures, or -1 if not found.
+// We build a bounding-box index first for speed.
+function buildBBoxIndex(features){
+    return features.map(feat=>{
+        try{
+            const geom=feat.geometry;
+            let minLon=180,maxLon=-180,minLat=90,maxLat=-90;
+            const processRing=ring=>{
+                ring.forEach(([lo,la])=>{
+                    if(lo<minLon)minLon=lo; if(lo>maxLon)maxLon=lo;
+                    if(la<minLat)minLat=la; if(la>maxLat)maxLat=la;
+                });
+            };
+            if(geom.type==='Polygon') geom.coordinates.forEach(processRing);
+            else if(geom.type==='MultiPolygon') geom.coordinates.forEach(p=>p.forEach(processRing));
+            return {minLon,maxLon,minLat,maxLat};
+        }catch(e){return {minLon:0,maxLon:0,minLat:0,maxLat:0};}
+    });
+}
+
+let bboxIndex=[];
+
+function findCountyForPoint(lon,lat){
+    for(let i=0;i<allCountyFeatures.length;i++){
+        const b=bboxIndex[i];
+        if(lon<b.minLon||lon>b.maxLon||lat<b.minLat||lat>b.maxLat) continue;
+        if(pointInFeature(lon,lat,allCountyFeatures[i])) return i;
+    }
+    return -1;
+}
+
 // ── Map Init ───────────────────────────────────────────────────────────────
-map = new atlas.Map('myMap', {
-    center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM,
-    minZoom: MIN_ZOOM, maxZoom: MAX_ZOOM, maxBounds: NA_BOUNDS,
-    style: 'road', language: 'en-US',
-    authOptions: { authType:'subscriptionKey', subscriptionKey:AZURE_MAPS_KEY },
+map = new atlas.Map('myMap',{
+    center:DEFAULT_CENTER, zoom:DEFAULT_ZOOM,
+    minZoom:MIN_ZOOM, maxZoom:MAX_ZOOM, maxBounds:NA_BOUNDS,
+    style:'road', language:'en-US',
+    authOptions:{authType:'subscriptionKey',subscriptionKey:AZURE_MAPS_KEY},
     showZoomControl:false, showPitchControl:false, showCompass:false
 });
 
@@ -224,59 +333,136 @@ async function fetchAEMData(){
         const res=await fetch(API_ENDPOINT,{method:'GET',headers:{'Content-Type':'application/json'}});
         if(!res.ok) throw new Error('HTTP '+res.status);
         const d=await res.json(); return d.results||d;
-    }catch(e){ console.warn('[AEM] Sample data fallback:', e.message); return getSampleData(); }
+    }catch(e){
+        console.warn('[AEM] Sample data fallback:', e.message);
+        return getSampleData();
+    }
 }
 
 function getSampleData(){
     return [
-        {Nation:'United States',State:'California',County:'Santa Cruz, CA',Territory:'West',RBM:'Glenn Young',MFG_Quantity:87,ParentDealerId:'DLR001',ParentDealerName:'Pacific Equipment',Segment:'Construction',Product_Level2:'Wheel Loaders',Summary:'Full Line Dealer',Latitude:36.9741,Longitude:-122.0308},
-        {Nation:'United States',State:'Arizona',County:'Yavapai, AZ',Territory:'West',RBM:'Glenn Young',MFG_Quantity:134,ParentDealerId:'DLR002',ParentDealerName:'Desert Machinery',Segment:'Mining',Product_Level2:'Wheel Loaders',Summary:'Full Line Dealer',Latitude:34.54,Longitude:-112.4685},
-        {Nation:'United States',State:'Florida',County:'Volusia, FL',Territory:'South',RBM:'William Swartz',MFG_Quantity:56,ParentDealerId:'DLR003',ParentDealerName:'Florida Equipment',Segment:'Construction',Product_Level2:'Wheel Loaders',Summary:'Specialty Dealer',Latitude:29.028,Longitude:-81.0998},
-        {Nation:'United States',State:'Iowa',County:'Wapello, IA',Territory:'Midwest',RBM:'Paul Kindelspire',MFG_Quantity:72,ParentDealerId:'DLR005',ParentDealerName:'Heartland Equipment',Segment:'Agriculture',Product_Level2:'Wheel Loaders',Summary:'Full Line Dealer',Latitude:41.02,Longitude:-92.41},
-        {Nation:'United States',State:'Illinois',County:'Cook, IL',Territory:'Midwest',RBM:'Paul Kindelspire',MFG_Quantity:198,ParentDealerId:'DLR006',ParentDealerName:'Midwest Machinery',Segment:'Construction',Product_Level2:'Wheel Loaders',Summary:'Full Line Dealer',Latitude:41.878,Longitude:-87.63},
-        {Nation:'United States',State:'Texas',County:'Dallas, TX',Territory:'South',RBM:'William Swartz',MFG_Quantity:245,ParentDealerId:'DLR007',ParentDealerName:'Texas Equipment Co',Segment:'Construction',Product_Level2:'Wheel Loaders',Summary:'Full Line Dealer',Latitude:32.7767,Longitude:-96.797},
-        {Nation:'Canada',State:'Alberta',County:'Rocky View County, AB',Territory:'Canada',RBM:'Quoc Nguyen',MFG_Quantity:156,ParentDealerId:'DLR011',ParentDealerName:'Alberta Machinery',Segment:'Mining',Product_Level2:'Wheel Loaders',Summary:'Full Line Dealer',Latitude:51.1784,Longitude:-114.1744},
-        {Nation:'Canada',State:'Ontario',County:'Toronto, ON',Territory:'Canada',RBM:'Quoc Nguyen',MFG_Quantity:125,ParentDealerId:'DLR012',ParentDealerName:'Ontario Equipment',Segment:'Construction',Product_Level2:'Wheel Loaders',Summary:'Full Line Dealer',Latitude:43.6532,Longitude:-79.3832}
+        {County:'Santa Cruz, CA',Dealer_Id:'TWT100',Equipment_Count:1881,Latitude:'36.9741',Longitude:'-122.0308',Model_Count:7,Nation:'United States',ParentDealerId:'TWT100',ParentDealerName:'TRI-WEST TRACTOR',Primary_CustomerType:'State Government',Primary_Product:'Construction',RBM:'Glenn Young',State:'California',Territory:'West',Total_MFG_Quantity:20,Total_MKT_Quantity:1934},
+        {County:'Yavapai, AZ',Dealer_Id:'DES200',Equipment_Count:950,Latitude:'34.54',Longitude:'-112.4685',Model_Count:5,Nation:'United States',ParentDealerId:'DES200',ParentDealerName:'DESERT MACHINERY',Primary_CustomerType:'Contractor',Primary_Product:'Mining',RBM:'Glenn Young',State:'Arizona',Territory:'West',Total_MFG_Quantity:134,Total_MKT_Quantity:980},
+        {County:'Cook, IL',Dealer_Id:'MID300',Equipment_Count:2100,Latitude:'41.878',Longitude:'-87.63',Model_Count:9,Nation:'United States',ParentDealerId:'MID300',ParentDealerName:'MIDWEST MACHINERY',Primary_CustomerType:'Contractor',Primary_Product:'Construction',RBM:'Paul Kindelspire',State:'Illinois',Territory:'Midwest',Total_MFG_Quantity:198,Total_MKT_Quantity:2150},
+        {County:'Dallas, TX',Dealer_Id:'TEX400',Equipment_Count:3200,Latitude:'32.7767',Longitude:'-96.797',Model_Count:11,Nation:'United States',ParentDealerId:'TEX400',ParentDealerName:'TEXAS EQUIPMENT CO',Primary_CustomerType:'Contractor',Primary_Product:'Construction',RBM:'William Swartz',State:'Texas',Territory:'South',Total_MFG_Quantity:245,Total_MKT_Quantity:3300},
+        {County:'Toronto, ON',Dealer_Id:'ONT500',Equipment_Count:1500,Latitude:'43.6532',Longitude:'-79.3832',Model_Count:6,Nation:'Canada',ParentDealerId:'ONT500',ParentDealerName:'ONTARIO EQUIPMENT',Primary_CustomerType:'Government',Primary_Product:'Construction',RBM:'Quoc Nguyen',State:'Ontario',Territory:'Canada',Total_MFG_Quantity:125,Total_MKT_Quantity:1550}
     ];
 }
 
-// ── Aggregate by dealer ────────────────────────────────────────────────────
+// ── Aggregate ──────────────────────────────────────────────────────────────
 function aggregateByDealer(raw){
     const m=new Map();
     raw.forEach(r=>{
-        const lat=parseFloat(r.Latitude), lon=parseFloat(r.Longitude);
+        const lat=parseFloat(r.Latitude),lon=parseFloat(r.Longitude);
         if(!isValidCoord(lat,lon)) return;
-        const key=`${r.ParentDealerId}|${lat.toFixed(4)}|${lon.toFixed(4)}`;
-        if(m.has(key)){ m.get(key).MFG_Quantity+=(parseFloat(r.MFG_Quantity)||0); }
-        else m.set(key,{
-            Latitude:lat, Longitude:lon, MFG_Quantity:parseFloat(r.MFG_Quantity)||0,
-            State:r.State||'', County:r.County||'', Nation:r.Nation||'',
-            Territory:r.Territory||'', RBM:r.RBM||'',
-            ParentDealerId:r.ParentDealerId||'', ParentDealerName:r.ParentDealerName||'',
-            Segment:r.Segment||'', Product_Level2:r.Product_Level2||'', Summary:r.Summary||''
-        });
+        const key=`${r.ParentDealerId||r.Dealer_Id}|${lat.toFixed(4)}|${lon.toFixed(4)}`;
+        if(m.has(key)){
+            const ex=m.get(key);
+            ex.Total_MFG_Quantity+=(parseFloat(r.Total_MFG_Quantity)||0);
+            ex.Total_MKT_Quantity+=(parseFloat(r.Total_MKT_Quantity)||0);
+            ex.Equipment_Count   +=(parseFloat(r.Equipment_Count)||0);
+        } else {
+            m.set(key,{
+                Latitude:lat, Longitude:lon,
+                Total_MFG_Quantity:parseFloat(r.Total_MFG_Quantity)||0,
+                Total_MKT_Quantity:parseFloat(r.Total_MKT_Quantity)||0,
+                Equipment_Count:   parseFloat(r.Equipment_Count)||0,
+                Model_Count:       parseFloat(r.Model_Count)||0,
+                State:r.State||'', County:r.County||'', Nation:r.Nation||'',
+                Territory:r.Territory||'', RBM:r.RBM||'',
+                ParentDealerId:r.ParentDealerId||r.Dealer_Id||'',
+                ParentDealerName:r.ParentDealerName||'',
+                Primary_Product:r.Primary_Product||'',
+                Primary_CustomerType:r.Primary_CustomerType||'',
+                Segment:r.Primary_Product||r.Segment||'',
+                Product_Level2:r.Product_Level2||r.Primary_Product||'',
+                Summary:r.Summary||''
+            });
+        }
     });
     return Array.from(m.values());
 }
 
-// ── Load county boundary lines ─────────────────────────────────────────────
-async function loadCountyLines(){
-    try{
-        setSub('Loading US county lines…');
-        const r=await fetch(COUNTY_GEOJSON_URL);
-        const g=await r.json();
-        // Add all US county polygons as outlines only
-        countyLineSource.add(g);
-        console.log('[AEM] US county lines loaded:', (g.features||[]).length);
-    }catch(e){ console.error('[AEM] County lines failed:',e); }
+// ── Build choropleth using point-in-polygon matching ───────────────────────
+// For each dealer, find which GeoJSON county polygon contains their lat/lon,
+// then colour that county polygon by total MFG units. No name matching needed.
+function buildChoropleth(filtered){
+    if(!choroplethSource||!allCountyFeatures.length) return;
+
+    // Accumulate sales per county feature index
+    const countySales={};  // { featureIndex: totalMFGQty }
+    let matched=0, unmatched=0;
+
+    filtered.forEach(d=>{
+        const idx=findCountyForPoint(d.Longitude,d.Latitude);
+        if(idx>=0){
+            countySales[idx]=(countySales[idx]||0)+d.Total_MFG_Quantity;
+            matched++;
+        } else {
+            unmatched++;
+        }
+    });
+
+    console.log(`[AEM] Choropleth: ${matched} matched, ${unmatched} unmatched`);
+    if(!Object.keys(countySales).length){ choroplethSource.clear(); return; }
+
+    const maxQty=Math.max(1,...Object.values(countySales));
+
+    // Build coloured features — only counties with sales data
+    const coloredFeatures=Object.entries(countySales).map(([idxStr,qty])=>{
+        const idx=parseInt(idxStr);
+        const feat=allCountyFeatures[idx];
+        const props=feat.properties||{};
+        const norm=qty/maxQty;
+        const fillColor=normToColor(norm);
+        const label=getCountyLabel(props);
+        return {
+            ...feat,
+            properties:{...props, qty, norm, fillColor, _countyLabel:label, _isChoropleth:true}
+        };
+    });
+
+    choroplethSource.clear();
+    choroplethSource.add({type:'FeatureCollection',features:coloredFeatures});
+    console.log(`[AEM] Painted ${coloredFeatures.length} counties`);
+}
+
+// ── Load GeoJSON ───────────────────────────────────────────────────────────
+async function loadBoundaries(){
+    let usFeatures=[], canadaFeatures=[];
 
     try{
-        setSub('Loading Canada province lines…');
+        setSub('Loading US county boundaries…');
+        const r=await fetch(COUNTY_GEOJSON_URL);
+        const g=await r.json();
+        usFeatures=g.features||[];
+        console.log('[AEM] US features:', usFeatures.length);
+    }catch(e){ console.error('[AEM] US GeoJSON failed:',e); }
+
+    try{
+        setSub('Loading Canada boundaries…');
         const r=await fetch(CANADA_GEOJSON_URL);
         const g=await r.json();
-        countyLineSource.add(g);
-        console.log('[AEM] Canada lines loaded:', (g.features||[]).length);
-    }catch(e){ console.error('[AEM] Canada lines failed:',e); }
+        canadaFeatures=(g.features||[]).map(f=>({
+            ...f,
+            properties:{...f.properties, name:f.properties.name||f.properties.NAME||''}
+        }));
+        console.log('[AEM] Canada features:', canadaFeatures.length);
+    }catch(e){ console.error('[AEM] Canada GeoJSON failed:',e); }
+
+    allCountyFeatures=[...usFeatures,...canadaFeatures];
+
+    setSub('Building spatial index…');
+    bboxIndex=buildBBoxIndex(allCountyFeatures);
+
+    // Also load county lines on the line source (all features, uncoloured)
+    try{
+        const allGeo={type:'FeatureCollection',features:allCountyFeatures.map(f=>({
+            ...f,
+            properties:{...f.properties,_countyLabel:getCountyLabel(f.properties)}
+        }))};
+        countyLineSource.add(allGeo);
+    }catch(e){ console.error('[AEM] County line source failed:',e); }
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
@@ -284,7 +470,7 @@ async function initializeApp(){
     setLoadingText('Fetching AEM sales data…');
     const raw=await fetchAEMData();
     dealerData=aggregateByDealer(raw);
-    console.log('[AEM] Dealers:',dealerData.length);
+    console.log('[AEM] Dealers:', dealerData.length);
 
     dealerData.forEach(d=>{
         if(d.Nation)         allNations.add(d.Nation);
@@ -298,7 +484,7 @@ async function initializeApp(){
     populateFilters();
 
     setLoadingText('Loading county boundaries…');
-    await loadCountyLines();
+    await loadBoundaries();
 
     document.getElementById('loadingOverlay').classList.add('hidden');
     refreshMap(); updateStats(); updateRBMList();
@@ -320,92 +506,103 @@ function populateDD(id,set){
 }
 
 // ── Map Ready ──────────────────────────────────────────────────────────────
-map.events.add('ready', async()=>{
+map.events.add('ready',async()=>{
 
-    // ── County outline source (lines only, no fill) ──────────────────────
-    countyLineSource = new atlas.source.DataSource(null,{cluster:false});
+    // Choropleth fill source (coloured county polygons — only shaded counties)
+    choroplethSource=new atlas.source.DataSource(null,{cluster:false});
+    map.sources.add(choroplethSource);
+
+    choroplethFillLayer=new atlas.layer.PolygonLayer(choroplethSource,'choroplethFill',{
+        fillColor:['get','fillColor'],
+        fillOpacity:1
+    });
+    map.layers.add(choroplethFillLayer,'labels');
+
+    // County outline source (all counties, no fill — just lines + hover hit area)
+    countyLineSource=new atlas.source.DataSource(null,{cluster:false});
     map.sources.add(countyLineSource);
 
-    countyLineLayer = new atlas.layer.LineLayer(countyLineSource,'countyLines',{
-        strokeColor: 'rgba(80,100,130,0.35)',
-        strokeWidth: 0.6,
-        // Only show at zoom 5+ to avoid clutter at country level
-        minZoom: 4
+    // Invisible hit-test polygon for hover tooltip
+    choroplethHitLayer=new atlas.layer.PolygonLayer(countyLineSource,'countyHit',{
+        fillColor:'rgba(0,0,0,0)',
+        fillOpacity:1,
+        minZoom:4
+    });
+    map.layers.add(choroplethHitLayer,'labels');
+
+    // Visible county boundary lines
+    countyLineLayer=new atlas.layer.LineLayer(countyLineSource,'countyLines',{
+        strokeColor:'rgba(80,100,130,0.35)',
+        strokeWidth:0.6,
+        minZoom:4
     });
     map.layers.add(countyLineLayer,'labels');
 
-    // ── Dealer data source (heat map + pins share this) ──────────────────
-    dealerSource = new atlas.source.DataSource();
+    // Dealer source
+    dealerSource=new atlas.source.DataSource();
     map.sources.add(dealerSource);
 
-    // Heat map — weighted by MFG_Quantity
-    heatLayer = new atlas.layer.HeatMapLayer(dealerSource, null, {
-        weight: [
-            'interpolate', ['linear'],
-            ['get','MFG_Quantity'],
-            0, 0,
-            50, 0.4,
-            100, 0.7,
-            300, 1.0
-        ],
-        radius: [
-            'interpolate', ['linear'], ['zoom'],
-            3, 20,
-            6, 35,
-            9, 55
-        ],
-        opacity: 0.8,
-        intensity: 0.7,
-        color: [
-            'interpolate', ['linear'], ['heatmap-density'],
-            0,   'rgba(255,255,255,0)',
-            0.15,'rgba(255,220,220,0.5)',
-            0.35,'rgba(255,180,180,0.72)',
-            0.6, 'rgba(220,100,100,0.85)',
-            0.8, 'rgba(178,34,34,0.93)',
-            1,   'rgba(139,0,0,1)'
-        ]
-    });
-    map.layers.add(heatLayer,'labels');
-
-    // Blue bubble dealer pins (on top of heat map)
-    dealerLayer = new atlas.layer.BubbleLayer(dealerSource,'dealerBubble',{
-        radius: 7,
-        color: '#1a73e8',
-        strokeColor: '#0d47a1',
-        strokeWidth: 2,
-        opacity: 0.95
+    dealerLayer=new atlas.layer.BubbleLayer(dealerSource,'dealerBubble',{
+        radius:7, color:'#1a73e8', strokeColor:'#0d47a1', strokeWidth:2, opacity:0.95
     });
     map.layers.add(dealerLayer);
 
-    // Dealer labels (off by default)
-    labelLayer = new atlas.layer.SymbolLayer(dealerSource,'dealerLabel',{
+    labelLayer=new atlas.layer.SymbolLayer(dealerSource,'dealerLabel',{
         iconOptions:{image:'none'},
         textOptions:{textField:['get','ParentDealerName'],offset:[0,1.5],size:11,color:'#000',haloColor:'#fff',haloWidth:2,allowOverlap:false}
     });
     map.layers.add(labelLayer);
     labelLayer.setOptions({visible:false});
 
-    popup = new atlas.Popup({pixelOffset:[0,-10],closeButton:true});
+    popup=new atlas.Popup({pixelOffset:[0,-10],closeButton:true});
 
-    map.events.add('click',dealerLayer,e=>{
+    // County hover tooltip
+    const canvas=map.getCanvasContainer();
+
+    function showCountyTooltip(e, source){
+        if(!document.getElementById('toggleCountyLines').checked) return;
+        if(e.shapes&&e.shapes.length>0){
+            const props=e.shapes[0].getProperties();
+            const label=props._countyLabel||props.NAME||props.name||'';
+            if(!label) return;
+            const qty=props.qty;
+            tooltip.innerHTML=qty
+                ? `<strong>${label}</strong><br><span style="font-weight:400;font-size:11px;">${Number(qty).toLocaleString()} MFG units</span>`
+                : `<strong>${label}</strong>`;
+            tooltip.style.display='block';
+            const rect=canvas.getBoundingClientRect();
+            tooltip.style.left=(e.originalEvent.clientX-rect.left+14)+'px';
+            tooltip.style.top =(e.originalEvent.clientY-rect.top -34)+'px';
+            canvas.style.cursor='crosshair';
+        }
+    }
+
+    map.events.add('mousemove', choroplethHitLayer,  e=>showCountyTooltip(e,'line'));
+    map.events.add('mousemove', choroplethFillLayer, e=>showCountyTooltip(e,'fill'));
+    map.events.add('mouseleave',choroplethHitLayer,  ()=>{ tooltip.style.display='none'; canvas.style.cursor='grab'; });
+    map.events.add('mouseleave',choroplethFillLayer, ()=>{ tooltip.style.display='none'; canvas.style.cursor='grab'; });
+
+    map.events.add('click', dealerLayer, e=>{
         if(e.shapes&&e.shapes.length>0) showDealerPopup(e.shapes[0].getProperties());
     });
-    map.events.add('mouseover',dealerLayer,()=>{ map.getCanvasContainer().style.cursor='pointer'; });
-    map.events.add('mouseout', dealerLayer,()=>{ map.getCanvasContainer().style.cursor='grab'; });
+    map.events.add('mouseover', dealerLayer, ()=>{ canvas.style.cursor='pointer'; });
+    map.events.add('mouseout',  dealerLayer, ()=>{ canvas.style.cursor='grab'; });
 
     await initializeApp();
 });
 
 // ── Refresh ────────────────────────────────────────────────────────────────
 function refreshMap(){
-    if(!dealerSource) return;
+    if(!dealerSource||!choroplethSource) return;
     const filtered=getFiltered();
+
+    // Rebuild choropleth
+    buildChoropleth(filtered);
+
+    // Rebuild dealer pins
     dealerSource.clear();
     filtered.forEach(d=>{
-        dealerSource.add(new atlas.data.Feature(
-            new atlas.data.Point([d.Longitude,d.Latitude]), d
-        ));
+        dealerSource.add(new atlas.data.Feature(new atlas.data.Point([d.Longitude,d.Latitude]),d));
     });
 }
 
@@ -430,9 +627,10 @@ function getFiltered(){
           product=document.getElementById('productFilter').value;
     return dealerData.filter(d=>
         isValidCoord(d.Latitude,d.Longitude)&&
-        (!nation||d.Nation===nation)&&(!state||d.State===state)&&(!county||d.County===county)&&
-        (!territory||d.Territory===territory)&&(!rbm||d.RBM===rbm)&&
-        (!segment||d.Segment===segment)&&(!product||d.Product_Level2===product)
+        (!nation||d.Nation===nation)&&(!state||d.State===state)&&
+        (!county||d.County===county)&&(!territory||d.Territory===territory)&&
+        (!rbm||d.RBM===rbm)&&(!segment||d.Segment===segment)&&
+        (!product||d.Product_Level2===product)
     );
 }
 
@@ -442,15 +640,17 @@ function zoomToFiltered(){
     if(f.length===1){map.setCamera({center:[f[0].Longitude,f[0].Latitude],zoom:10,type:'ease',duration:1000});return;}
     const lons=f.map(d=>d.Longitude),lats=f.map(d=>d.Latitude);
     const minLon=Math.max(Math.min(...lons),-170),maxLon=Math.min(Math.max(...lons),-30);
-    const minLat=Math.max(Math.min(...lats),-60),maxLat=Math.min(Math.max(...lats),75);
+    const minLat=Math.max(Math.min(...lats),-60), maxLat=Math.min(Math.max(...lats),75);
     if(minLon>=maxLon||minLat>=maxLat){resetView();return;}
     map.setCamera({bounds:[minLon,minLat,maxLon,maxLat],padding:80,type:'ease',duration:1000});
 }
 
 function updateStats(){
     const f=getFiltered();
-    document.getElementById('totalDealers').textContent=f.length;
-    document.getElementById('totalQuantity').textContent=f.reduce((s,d)=>s+(d.MFG_Quantity||0),0).toLocaleString();
+    document.getElementById('totalDealers').textContent   = f.length;
+    document.getElementById('totalUnits').textContent     = f.reduce((s,d)=>s+(d.Total_MFG_Quantity||0),0).toLocaleString();
+    document.getElementById('totalEquipment').textContent = f.reduce((s,d)=>s+(d.Equipment_Count||0),0).toLocaleString();
+    document.getElementById('totalMkt').textContent       = f.reduce((s,d)=>s+(d.Total_MKT_Quantity||0),0).toLocaleString();
 }
 
 function updateRBMList(){
@@ -460,7 +660,7 @@ function updateRBMList(){
     if(!rbms.length){const li=document.createElement('li');li.textContent='No RBMs';li.style.cssText='font-style:italic;color:#999';el.appendChild(li);return;}
     rbms.forEach(r=>{
         const cnt=f.filter(d=>d.RBM===r).length;
-        const qty=f.filter(d=>d.RBM===r).reduce((s,d)=>s+(d.MFG_Quantity||0),0);
+        const qty=f.filter(d=>d.RBM===r).reduce((s,d)=>s+(d.Total_MFG_Quantity||0),0);
         const li=document.createElement('li');
         li.innerHTML=`<strong>${r}</strong><br><small>${cnt} dealers · ${qty.toLocaleString()} units</small>`;
         el.appendChild(li);
@@ -468,24 +668,36 @@ function updateRBMList(){
 }
 
 function toggleLayer(t){
-    if(t==='heat')        heatLayer.setOptions({visible:document.getElementById('toggleHeat').checked});
-    if(t==='countyLines'){ countyLineLayer.setOptions({visible:document.getElementById('toggleCountyLines').checked}); }
-    if(t==='pins')        dealerLayer.setOptions({visible:document.getElementById('togglePins').checked});
-    if(t==='labels')      labelLayer.setOptions({visible:document.getElementById('toggleLabels').checked});
+    if(t==='choropleth'){
+        const v=document.getElementById('toggleChoropleth').checked;
+        choroplethFillLayer.setOptions({visible:v});
+    }
+    if(t==='countyLines'){
+        const v=document.getElementById('toggleCountyLines').checked;
+        countyLineLayer.setOptions({visible:v});
+        choroplethHitLayer.setOptions({visible:v});
+        if(!v) tooltip.style.display='none';
+    }
+    if(t==='pins')   dealerLayer.setOptions({visible:document.getElementById('togglePins').checked});
+    if(t==='labels') labelLayer.setOptions({visible:document.getElementById('toggleLabels').checked});
 }
 
 function showDealerPopup(p){
-    popup.setOptions({position:[p.Longitude,p.Latitude],content:`<div class="popup-content">
-        <h3>${p.ParentDealerName}</h3>
-        <div class="popup-row"><span class="popup-label">Dealer ID:</span><span class="popup-value">${p.ParentDealerId}</span></div>
-        <div class="popup-row"><span class="popup-label">Location:</span><span class="popup-value">${p.County}</span></div>
-        <div class="popup-row"><span class="popup-label">Territory:</span><span class="popup-value">${p.Territory}</span></div>
-        <div class="popup-row"><span class="popup-label">RBM:</span><span class="popup-value">${p.RBM}</span></div>
-        <div class="popup-row"><span class="popup-label">Units:</span><span class="popup-value"><strong>${Number(p.MFG_Quantity||0).toLocaleString()}</strong></span></div>
-        <div class="popup-row"><span class="popup-label">Segment:</span><span class="popup-value">${p.Segment}</span></div>
-        <div class="popup-row"><span class="popup-label">Product:</span><span class="popup-value">${p.Product_Level2}</span></div>
-        <div class="popup-row"><span class="popup-label">Type:</span><span class="popup-value">${p.Summary}</span></div>
-    </div>`});
+    popup.setOptions({
+        position:[p.Longitude,p.Latitude],
+        content:`<div class="popup-content">
+            <h3>${p.ParentDealerName}</h3>
+            <div class="popup-row"><span class="popup-label">Dealer ID:</span><span class="popup-value">${p.ParentDealerId}</span></div>
+            <div class="popup-row"><span class="popup-label">Location:</span><span class="popup-value">${p.County}</span></div>
+            <div class="popup-row"><span class="popup-label">Territory:</span><span class="popup-value">${p.Territory}</span></div>
+            <div class="popup-row"><span class="popup-label">RBM:</span><span class="popup-value">${p.RBM}</span></div>
+            <div class="popup-row"><span class="popup-label">MFG Units:</span><span class="popup-value"><strong>${Number(p.Total_MFG_Quantity||0).toLocaleString()}</strong></span></div>
+            <div class="popup-row"><span class="popup-label">Mkt Units:</span><span class="popup-value">${Number(p.Total_MKT_Quantity||0).toLocaleString()}</span></div>
+            <div class="popup-row"><span class="popup-label">Equipment:</span><span class="popup-value">${Number(p.Equipment_Count||0).toLocaleString()}</span></div>
+            <div class="popup-row"><span class="popup-label">Product:</span><span class="popup-value">${p.Primary_Product||p.Product_Level2||''}</span></div>
+            <div class="popup-row"><span class="popup-label">Customer Type:</span><span class="popup-value">${p.Primary_CustomerType||''}</span></div>
+        </div>`
+    });
     popup.open(map);
 }
 
