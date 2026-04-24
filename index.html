@@ -43,7 +43,6 @@
     .stat-item { background: #f8f9fa; padding: 4px 6px; border-radius: 5px; text-align: center; }
     .stat-value { font-size: 16px; font-weight: bold; color: #667eea; }
     .stat-label { font-size: 9px; color: #666; text-transform: uppercase; margin-top: 2px; }
-
     .date-badge { position: absolute; top: 0; right: 0; background: #f59e0b; color: white; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 3px; display: none; }
 
     #myMap { flex: 1; width: 100%; position: relative; }
@@ -90,12 +89,12 @@
     .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
     @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
     .loading-text { margin-top: 20px; font-size: 18px; color: #667eea; font-weight: 600; }
-    .loading-sub { margin-top: 8px; font-size: 13px; color: #999; }
+    .loading-sub  { margin-top: 8px; font-size: 13px; color: #999; }
     .hidden { display: none; }
 
     .popup-content { font-size: 13px; padding: 5px; max-width: 300px; }
     .popup-content h3 { margin: 0 0 8px 0; font-size: 15px; border-bottom: 2px solid; padding-bottom: 4px; }
-    .popup-content h3.aem  { color: #1a73e8; border-color: #1a73e8; }
+    .popup-content h3.aem    { color: #1a73e8; border-color: #1a73e8; }
     .popup-content h3.branch { color: #e8711a; border-color: #e8711a; }
     .popup-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #eee; gap: 10px; }
     .popup-row:last-child { border-bottom: none; }
@@ -107,14 +106,15 @@
 <div class="container">
 
     <div class="filter-panel">
-        <div class="filter-group"><label>Nation</label><select id="nationFilter" onchange="applyFilters()"><option value="">All Nations</option></select></div>
+        <!-- Filters: State, Territory, Dealer, Product, Segment, Date Range -->
         <div class="filter-group"><label>State / Region</label><select id="stateFilter" onchange="applyFilters()"><option value="">All States</option></select></div>
-        <div class="filter-group"><label>County</label><select id="countyFilter" onchange="applyFilters()"><option value="">All Counties</option></select></div>
         <div class="filter-group"><label>Territory</label><select id="territoryFilter" onchange="applyFilters()"><option value="">All Territories</option></select></div>
-        <div class="filter-group"><label>RBM</label><select id="rbmFilter" onchange="applyFilters()"><option value="">All RBMs</option></select></div>
-        <div class="filter-group"><label>Segment</label><select id="segmentFilter" onchange="applyFilters()"><option value="">All Segments</option></select></div>
-        <div class="filter-group"><label>Product Level</label><select id="productFilter" onchange="applyFilters()"><option value="">All Products</option></select></div>
+        <div class="filter-group" style="min-width:150px;"><label>Dealer</label><select id="dealerFilter" onchange="applyFilters()"><option value="">All Dealers</option></select></div>
+        <div class="filter-group"><label>Product</label><select id="productFilter" onchange="applyFilters()"><option value="">All Products</option></select></div>
+        <div class="filter-group"><label>Segment</label><select id="summaryFilter" onchange="applyFilters()"><option value="">All Segments</option></select></div>
 
+
+        <!-- Date Range -->
         <div class="date-range-group">
             <label>Date Range</label>
             <div class="date-range-row">
@@ -127,11 +127,12 @@
             </div>
         </div>
 
+        <!-- Stats -->
         <div class="info-panel">
             <div class="date-badge" id="dateBadge">DATE FILTERED</div>
             <h4>Dashboard Stats</h4>
             <div class="stats-grid">
-                <div class="stat-item"><div class="stat-value" id="totalDealers">0</div><div class="stat-label">AEM Dealers</div></div>
+                <div class="stat-item"><div class="stat-value" id="totalDealers">0</div><div class="stat-label">Dealers</div></div>
                 <div class="stat-item"><div class="stat-value" id="totalUnits">0</div><div class="stat-label">MFG Units</div></div>
                 <div class="stat-item"><div class="stat-value" id="totalBranches">0</div><div class="stat-label">Branches</div></div>
                 <div class="stat-item"><div class="stat-value" id="totalEquipment">0</div><div class="stat-label">Equipment</div></div>
@@ -164,11 +165,11 @@
         <div class="map-controls">
             <h4>Map Layers</h4>
             <div class="toggle-group">
-                <div class="toggle-item"><input type="checkbox" id="toggleChoropleth"   checked onchange="toggleLayer('choropleth')">  <label for="toggleChoropleth">County Choropleth</label></div>
-                <div class="toggle-item"><input type="checkbox" id="toggleCountyLines"  checked onchange="toggleLayer('countyLines')">  <label for="toggleCountyLines">County Lines</label></div>
-                <div class="toggle-item"><input type="checkbox" id="toggleAEMPins"      checked onchange="toggleLayer('aemPins')">      <div class="toggle-dot" style="background:#1a73e8;border:2px solid #0d47a1;"></div><label for="toggleAEMPins">AEM Sales Pins</label></div>
-                <div class="toggle-item"><input type="checkbox" id="toggleBranchPins"   checked onchange="toggleLayer('branchPins')">   <div class="toggle-dot" style="background:#e8711a;border:2px solid #b85510;"></div><label for="toggleBranchPins">Branch Locations</label></div>
-                <div class="toggle-item"><input type="checkbox" id="toggleLabels"              onchange="toggleLayer('labels')">        <label for="toggleLabels">Dealer Labels</label></div>
+                <div class="toggle-item"><input type="checkbox" id="toggleChoropleth"  checked onchange="toggleLayer('choropleth')"><label for="toggleChoropleth">County Choropleth</label></div>
+                <div class="toggle-item"><input type="checkbox" id="toggleCountyLines" checked onchange="toggleLayer('countyLines')"><label for="toggleCountyLines">County Lines</label></div>
+                <div class="toggle-item"><input type="checkbox" id="toggleAEMPins"     checked onchange="toggleLayer('aemPins')"><div class="toggle-dot" style="background:#1a73e8;border:2px solid #0d47a1;"></div><label for="toggleAEMPins">AEM Sales Pins</label></div>
+                <div class="toggle-item"><input type="checkbox" id="toggleBranchPins"  checked onchange="toggleLayer('branchPins')"><div class="toggle-dot" style="background:#e8711a;border:2px solid #b85510;"></div><label for="toggleBranchPins">Branch Locations</label></div>
+                <div class="toggle-item"><input type="checkbox" id="toggleLabels"             onchange="toggleLayer('labels')"><label for="toggleLabels">Dealer Labels</label></div>
             </div>
         </div>
 
@@ -192,14 +193,17 @@
 <script src="https://atlas.microsoft.com/sdk/javascript/mapcontrol/2/atlas.min.js"></script>
 <script>
 
-const AEM_API_ENDPOINT     = 'https://aem-heat-map-api.azurewebsites.net/api/getAEMData';
-const BRANCH_API_ENDPOINT  = 'https://aem-heat-map-api.azurewebsites.net/api/getDealerLocations';
-const AZURE_MAPS_KEY       = 'D2rj4Lkx4masQx5oO7bANUDBBDm8qLSgAAbH3jW7QdyRkS4CIbcpJQQJ99BEACYeBjFTRtVWAAAgAZMP4Mo0';
-const DEFAULT_CENTER       = [-96.5, 49.0];
-const DEFAULT_ZOOM         = 3.5;
+const AEM_API_ENDPOINT    = 'https://aem-heat-map-api.azurewebsites.net/api/getAEMData';
+const BRANCH_API_ENDPOINT = 'https://aem-heat-map-api.azurewebsites.net/api/getDealerLocations';
+const AZURE_MAPS_KEY      = 'D2rj4Lkx4masQx5oO7bANUDBBDm8qLSgAAbH3jW7QdyRkS4CIbcpJQQJ99BEACYeBjFTRtVWAAAgAZMP4Mo0';
+const DEFAULT_CENTER      = [-96.5, 49.0];
+const DEFAULT_ZOOM        = 3.5;
 const MIN_ZOOM = 2.5, MAX_ZOOM = 18;
-const NA_BOUNDS            = [-168, 24, -52, 72.5];
-const MONTHS               = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const NA_BOUNDS           = [-168, 24, -52, 72.5];
+const MONTHS              = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// Allowed nations — Latin America excluded
+const ALLOWED_NATIONS = new Set(['United States', 'Canada', 'Puerto Rico']);
 
 const COUNTY_GEOJSON_URL = 'https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json';
 const CANADA_GEOJSON_URL = 'https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/canada.geojson';
@@ -214,17 +218,21 @@ const FIPS_TO_STATE = {
 };
 
 // ── State ──────────────────────────────────────────────────────────────────
-let rawData      = [];   // raw AEM records (un-aggregated, for date filtering)
-let dealerData   = [];   // aggregated AEM dealer records
-let branchData   = [];   // FlexGen branch locations
+let rawData    = [];   // raw AEM records for date filtering
+let dealerData = [];   // aggregated AEM dealer records
+let branchData = [];   // FlexGen branch locations
 let allCountyFeatures = [];
-let bboxIndex    = [];
+let bboxIndex  = [];
 let map, choroplethSource, countyLineSource, aemSource, branchSource;
-let choroplethFillLayer, choroplethHitLayer, countyLineLayer;
-let aemLayer, branchLayer, labelLayer, popup;
-let allNations=new Set(), allStates=new Set(), allCounties=new Set();
-let allTerritories=new Set(), allRBMs=new Set(), allSegments=new Set(), allProducts=new Set();
-let availableYears = new Set();
+let choroplethFillLayer, choroplethHitLayer, countyLineLayer, aemLayer, branchLayer, labelLayer, popup;
+
+// Filter option sets
+let allStates=new Set(), allTerritories=new Set(), allRBMs=new Set();
+let allDealers=new Map();
+let allSummaries=new Set();   // ParentDealerId → ParentDealerName
+let allProducts=new Set();
+
+let availableYears=new Set();
 
 const tooltip = document.getElementById('countyTooltip');
 
@@ -239,7 +247,7 @@ function normToColor(n){
     return 'rgba(100,0,0,0.97)';
 }
 
-// ── Point-in-polygon ───────────────────────────────────────────────────────
+// ── Spatial helpers ────────────────────────────────────────────────────────
 function pointInPolygon(px,py,ring){
     let inside=false;
     for(let i=0,j=ring.length-1;i<ring.length;j=i++){
@@ -289,11 +297,12 @@ function getCountyLabel(props){
     return props.name||props.NAME||'';
 }
 
-// ── Coord validation ───────────────────────────────────────────────────────
+// ── Coord validation — Americas only ──────────────────────────────────────
 function isValidCoord(lat,lon){
     if(lat==null||lon==null) return false;
     const la=parseFloat(lat),lo=parseFloat(lon);
     if(isNaN(la)||isNaN(lo)||(la===0&&lo===0)) return false;
+    if(String(lat).toUpperCase()==='NULL'||String(lon).toUpperCase()==='NULL') return false;
     return lo>=-170&&lo<=-30&&la>=-60&&la<=75;
 }
 
@@ -301,7 +310,7 @@ function isValidCoord(lat,lon){
 function parseRecordDate(d){
     if(!d) return null;
     const m=String(d).match(/(\d{4})[-\/](\d{2})/);
-    return m ? {year:parseInt(m[1]),month:parseInt(m[2])} : null;
+    return m?{year:parseInt(m[1]),month:parseInt(m[2])}:null;
 }
 function toYYYYMM(y,m){ return y*100+m; }
 
@@ -324,7 +333,7 @@ function getDateRange(){
     const tM=parseInt(document.getElementById('toMonth').value)||null;
     const tY=parseInt(document.getElementById('toYear').value)||null;
     if(!fY&&!tY) return null;
-    return { fromVal:fY?toYYYYMM(fY,fM||1):0, toVal:tY?toYYYYMM(tY,tM||12):999999 };
+    return {fromVal:fY?toYYYYMM(fY,fM||1):0, toVal:tY?toYYYYMM(tY,tM||12):999999};
 }
 function clearDateFilter(){
     ['fromMonth','fromYear','toMonth','toYear'].forEach(id=>{ document.getElementById(id).value=''; });
@@ -339,7 +348,6 @@ map = new atlas.Map('myMap',{
     authOptions:{authType:'subscriptionKey',subscriptionKey:AZURE_MAPS_KEY},
     showZoomControl:false, showPitchControl:false, showCompass:false
 });
-
 function zoomIn()    { map.setCamera({zoom:Math.min(map.getCamera().zoom+1,MAX_ZOOM),type:'ease',duration:300}); }
 function zoomOut()   { map.setCamera({zoom:Math.max(map.getCamera().zoom-1,MIN_ZOOM),type:'ease',duration:300}); }
 function resetView() { map.setCamera({center:DEFAULT_CENTER,zoom:DEFAULT_ZOOM,type:'ease',duration:800}); }
@@ -353,6 +361,7 @@ document.addEventListener('keydown',e=>{
 function setMapStyle(s){
     map.setStyle({style:s});
     ['btnStreet','btnSatellite','btnDark'].forEach(id=>document.getElementById(id).classList.remove('active'));
+    ({road:'btnStreet',satellite_road_labels:'btnSatellite',night:'btnDark'}[s]||'btnStreet');
     const m={road:'btnStreet',satellite_road_labels:'btnSatellite',night:'btnDark'};
     if(m[s]) document.getElementById(m[s]).classList.add('active');
 }
@@ -363,57 +372,55 @@ async function fetchAEMData(){
         const res=await fetch(AEM_API_ENDPOINT,{method:'GET',headers:{'Content-Type':'application/json'}});
         if(!res.ok) throw new Error('HTTP '+res.status);
         const d=await res.json(); return d.results||d;
-    }catch(e){ console.warn('[AEM] Sample data fallback:', e.message); return []; }
+    }catch(e){ console.warn('[AEM] Fetch failed:', e.message); return []; }
 }
 
 // ── Fetch branch locations ─────────────────────────────────────────────────
 async function fetchBranchData(){
     try{
-        setSub('Loading dealer branch locations (first load may take 2-3 min while geocoding)…');
+        setSub('Loading dealer branch locations…');
         const res=await fetch(BRANCH_API_ENDPOINT,{method:'GET',headers:{'Content-Type':'application/json'}});
         if(!res.ok) throw new Error('HTTP '+res.status);
         const d=await res.json();
-        console.log(`[Branch] ${d.count} locations loaded, ${d.skipped} skipped, ${d.geocode_calls} geocoded, ${d.cache_hits} from cache`);
+        console.log(`[Branch] ${d.count} loaded, ${d.skipped} skipped, ${d.geocode_calls} geocoded, ${d.cache_hits} cached`);
         return d.results||[];
-    }catch(e){
-        console.warn('[Branch] Failed to load branch locations:', e.message);
-        return [];
-    }
+    }catch(e){ console.warn('[Branch] Failed:', e.message); return []; }
 }
 
-// ── Aggregate AEM by dealer ────────────────────────────────────────────────
+// ── Aggregate AEM records by dealer ───────────────────────────────────────
 function aggregateByDealer(records){
     const m=new Map();
     records.forEach(r=>{
-        const lat=parseFloat(r.Latitude),lon=parseFloat(r.Longitude);
+        // Client-side nation filter — belt and suspenders
+        if(!ALLOWED_NATIONS.has(r.Nation)) return;
+        const lat=parseFloat(r.Latitude), lon=parseFloat(r.Longitude);
         if(!isValidCoord(lat,lon)) return;
-        const key=`${r.ParentDealerId||r.Dealer_Id}|${lat.toFixed(4)}|${lon.toFixed(4)}`;
+        const key=`${r.ParentDealerId}|${lat.toFixed(4)}|${lon.toFixed(4)}`;
         if(m.has(key)){
             const ex=m.get(key);
             ex.Total_MFG_Quantity+=(parseFloat(r.Total_MFG_Quantity)||0);
             ex.Equipment_Count   +=(parseFloat(r.Equipment_Count)||0);
-            ex.Model_Count       =Math.max(ex.Model_Count,parseFloat(r.Model_Count)||0);
         } else {
             m.set(key,{
                 Latitude:lat, Longitude:lon,
                 Total_MFG_Quantity:parseFloat(r.Total_MFG_Quantity)||0,
                 Equipment_Count:   parseFloat(r.Equipment_Count)||0,
-                Model_Count:       parseFloat(r.Model_Count)||0,
-                State:r.State||'', County:r.County||'', Nation:r.Nation||'',
-                Territory:r.Territory||'', RBM:r.RBM||'',
-                ParentDealerId:r.ParentDealerId||r.Dealer_Id||'',
-                ParentDealerName:r.ParentDealerName||'',
-                Primary_Product:r.Primary_Product||'',
-                Primary_CustomerType:r.Primary_CustomerType||'',
-                Segment:r.Primary_Product||r.Segment||'',
-                Product_Level2:r.Product_Level2||r.Primary_Product||''
+                State:             r.State||'',
+                County:            r.County||'',
+                Nation:            r.Nation||'',
+                Territory:         r.Territory||'',
+                RBM:               r.RBM||'',
+                ParentDealerId:    r.ParentDealerId||'',
+                ParentDealerName:  r.ParentDealerName||'',
+                Mfg_Product_Name:  r.Mfg_Product_Name||'',
+                Summary:           r.Summary||'',
             });
         }
     });
     return Array.from(m.values());
 }
 
-// ── Build choropleth ───────────────────────────────────────────────────────
+// ── Choropleth ─────────────────────────────────────────────────────────────
 function buildChoropleth(filtered){
     if(!choroplethSource||!allCountyFeatures.length) return;
     const countySales={};
@@ -432,11 +439,11 @@ function buildChoropleth(filtered){
     choroplethSource.add({type:'FeatureCollection',features});
 }
 
-// ── Load boundaries ────────────────────────────────────────────────────────
+// ── Load county boundaries ─────────────────────────────────────────────────
 async function loadBoundaries(){
     let usF=[],caF=[];
     try{ setSub('Loading US county boundaries…'); const g=await(await fetch(COUNTY_GEOJSON_URL)).json(); usF=g.features||[]; }catch(e){}
-    try{ setSub('Loading Canada boundaries…'); const g=await(await fetch(CANADA_GEOJSON_URL)).json(); caF=(g.features||[]).map(f=>({...f,properties:{...f.properties,name:f.properties.name||f.properties.NAME||''}})); }catch(e){}
+    try{ setSub('Loading Canada boundaries…');    const g=await(await fetch(CANADA_GEOJSON_URL)).json(); caF=(g.features||[]).map(f=>({...f,properties:{...f.properties,name:f.properties.name||f.properties.NAME||''}})); }catch(e){}
     allCountyFeatures=[...usF,...caF];
     setSub('Building spatial index…');
     bboxIndex=buildBBoxIndex(allCountyFeatures);
@@ -446,28 +453,23 @@ async function loadBoundaries(){
 // ── Init ───────────────────────────────────────────────────────────────────
 async function initializeApp(){
     setLoadingText('Fetching AEM sales data…');
+    const [aemRaw, branches] = await Promise.all([fetchAEMData(), fetchBranchData()]);
 
-    // Load both datasets in parallel
-    const [aemRaw, branches] = await Promise.all([
-        fetchAEMData(),
-        fetchBranchData()
-    ]);
-
-    rawData    = aemRaw;
+    // Filter branches to North America only
     branchData = branches.filter(b=>isValidCoord(b.Latitude,b.Longitude));
-    console.log('[Branch] Valid locations:', branchData.length);
+    rawData    = aemRaw.filter(r=>ALLOWED_NATIONS.has(r.Nation));
 
-    // Collect filter sets and available years from AEM data
+    // Build filter option sets
     rawData.forEach(r=>{
         const d=parseRecordDate(r.ReportDate);
         if(d) availableYears.add(d.year);
-        if(r.Nation)         allNations.add(r.Nation);
-        if(r.State)          allStates.add(r.State);
-        if(r.County)         allCounties.add(r.County);
-        if(r.Territory)      allTerritories.add(r.Territory);
-        if(r.RBM)            allRBMs.add(r.RBM);
-        if(r.Primary_Product||r.Segment) allSegments.add(r.Primary_Product||r.Segment);
-        if(r.Product_Level2||r.Primary_Product) allProducts.add(r.Product_Level2||r.Primary_Product);
+        if(r.State)           allStates.add(r.State);
+        if(r.Territory)       allTerritories.add(r.Territory);
+        if(r.RBM)             allRBMs.add(r.RBM);
+        if(r.ParentDealerId)  allDealers.set(r.ParentDealerId, r.ParentDealerName||r.ParentDealerId);
+        if(r.Mfg_Product_Name) allProducts.add(r.Mfg_Product_Name);
+        if(r.Summary)         allSummaries.add(r.Summary);
+
     });
 
     dealerData=aggregateByDealer(rawData);
@@ -485,10 +487,22 @@ function setLoadingText(t){ document.getElementById('loadingText').textContent=t
 function setSub(t){ document.getElementById('loadingSub').textContent=t; }
 
 function populateFilters(){
-    populateDD('nationFilter',allNations); populateDD('stateFilter',allStates);
-    populateDD('countyFilter',allCounties); populateDD('territoryFilter',allTerritories);
-    populateDD('rbmFilter',allRBMs); populateDD('segmentFilter',allSegments);
-    populateDD('productFilter',allProducts);
+    populateDD('stateFilter',     allStates);
+    populateDD('territoryFilter', allTerritories);
+    populateDD('productFilter',   allProducts);
+    populateDD('summaryFilter',   allSummaries);
+
+
+    // Dealer dropdown — sorted by name
+    const sel=document.getElementById('dealerFilter');
+    const cur=sel.value, first=sel.options[0];
+    sel.innerHTML=''; sel.appendChild(first);
+    [...allDealers.entries()].sort((a,b)=>a[1].localeCompare(b[1])).forEach(([id,name])=>{
+        const o=document.createElement('option');
+        o.value=id; o.textContent=name;
+        if(id===cur) o.selected=true;
+        sel.appendChild(o);
+    });
 }
 function populateDD(id,set){
     const sel=document.getElementById(id),cur=sel.value,first=sel.options[0];
@@ -499,13 +513,11 @@ function populateDD(id,set){
 // ── Map Ready ──────────────────────────────────────────────────────────────
 map.events.add('ready',async()=>{
 
-    // Choropleth fill
     choroplethSource=new atlas.source.DataSource(null,{cluster:false});
     map.sources.add(choroplethSource);
     choroplethFillLayer=new atlas.layer.PolygonLayer(choroplethSource,'choroplethFill',{fillColor:['get','fillColor'],fillOpacity:1});
     map.layers.add(choroplethFillLayer,'labels');
 
-    // County lines + hit layer
     countyLineSource=new atlas.source.DataSource(null,{cluster:false});
     map.sources.add(countyLineSource);
     choroplethHitLayer=new atlas.layer.PolygonLayer(countyLineSource,'countyHit',{fillColor:'rgba(0,0,0,0)',fillOpacity:1,minZoom:4});
@@ -513,23 +525,16 @@ map.events.add('ready',async()=>{
     countyLineLayer=new atlas.layer.LineLayer(countyLineSource,'countyLines',{strokeColor:'rgba(80,100,130,0.35)',strokeWidth:0.6,minZoom:4});
     map.layers.add(countyLineLayer,'labels');
 
-    // AEM sales pins — BLUE
     aemSource=new atlas.source.DataSource();
     map.sources.add(aemSource);
-    aemLayer=new atlas.layer.BubbleLayer(aemSource,'aemBubble',{
-        radius:7, color:'#1a73e8', strokeColor:'#0d47a1', strokeWidth:2, opacity:0.95
-    });
+    aemLayer=new atlas.layer.BubbleLayer(aemSource,'aemBubble',{radius:7,color:'#1a73e8',strokeColor:'#0d47a1',strokeWidth:2,opacity:0.95});
     map.layers.add(aemLayer);
 
-    // Branch location pins — ORANGE
     branchSource=new atlas.source.DataSource();
     map.sources.add(branchSource);
-    branchLayer=new atlas.layer.BubbleLayer(branchSource,'branchBubble',{
-        radius:7, color:'#e8711a', strokeColor:'#b85510', strokeWidth:2, opacity:0.95
-    });
+    branchLayer=new atlas.layer.BubbleLayer(branchSource,'branchBubble',{radius:7,color:'#e8711a',strokeColor:'#b85510',strokeWidth:2,opacity:0.95});
     map.layers.add(branchLayer);
 
-    // Labels (off by default) — shows AEM dealer names
     labelLayer=new atlas.layer.SymbolLayer(aemSource,'dealerLabel',{
         iconOptions:{image:'none'},
         textOptions:{textField:['get','ParentDealerName'],offset:[0,1.5],size:11,color:'#000',haloColor:'#fff',haloWidth:2,allowOverlap:false}
@@ -540,7 +545,6 @@ map.events.add('ready',async()=>{
     popup=new atlas.Popup({pixelOffset:[0,-10],closeButton:true});
     const canvas=map.getCanvasContainer();
 
-    // County hover tooltip
     function showTip(e){
         if(!document.getElementById('toggleCountyLines').checked) return;
         if(e.shapes&&e.shapes.length>0){
@@ -563,12 +567,10 @@ map.events.add('ready',async()=>{
     map.events.add('mouseleave',choroplethHitLayer, ()=>{ tooltip.style.display='none'; canvas.style.cursor='grab'; });
     map.events.add('mouseleave',choroplethFillLayer,()=>{ tooltip.style.display='none'; canvas.style.cursor='grab'; });
 
-    // AEM pin click
     map.events.add('click',aemLayer,e=>{ if(e.shapes&&e.shapes.length>0) showAEMPopup(e.shapes[0].getProperties()); });
     map.events.add('mouseover',aemLayer,()=>{ canvas.style.cursor='pointer'; });
     map.events.add('mouseout', aemLayer,()=>{ canvas.style.cursor='grab'; });
 
-    // Branch pin click
     map.events.add('click',branchLayer,e=>{ if(e.shapes&&e.shapes.length>0) showBranchPopup(e.shapes[0].getProperties()); });
     map.events.add('mouseover',branchLayer,()=>{ canvas.style.cursor='pointer'; });
     map.events.add('mouseout', branchLayer,()=>{ canvas.style.cursor='grab'; });
@@ -576,27 +578,17 @@ map.events.add('ready',async()=>{
     await initializeApp();
 });
 
-// ── Refresh both map layers ────────────────────────────────────────────────
+// ── Refresh ────────────────────────────────────────────────────────────────
 function refreshMap(){
     if(!aemSource||!branchSource||!choroplethSource) return;
     const filtered=getFiltered();
-
-    // Choropleth from AEM data
     buildChoropleth(filtered);
 
-    // AEM blue pins
     aemSource.clear();
-    filtered.forEach(d=>{
-        aemSource.add(new atlas.data.Feature(new atlas.data.Point([d.Longitude,d.Latitude]),d));
-    });
+    filtered.forEach(d=>{ aemSource.add(new atlas.data.Feature(new atlas.data.Point([d.Longitude,d.Latitude]),d)); });
 
-    // Branch orange pins — not filtered by AEM filters, always show all active branches
     branchSource.clear();
-    branchData.forEach(b=>{
-        branchSource.add(new atlas.data.Feature(
-            new atlas.data.Point([parseFloat(b.Longitude),parseFloat(b.Latitude)]), b
-        ));
-    });
+    branchData.forEach(b=>{ branchSource.add(new atlas.data.Feature(new atlas.data.Point([parseFloat(b.Longitude),parseFloat(b.Latitude)]),b)); });
 
     document.getElementById('totalBranches').textContent = branchData.length.toLocaleString();
 }
@@ -609,36 +601,31 @@ function applyFilters(){
         dateFiltered=rawData.filter(r=>{
             const d=parseRecordDate(r.ReportDate);
             if(!d) return false;
-            const val=toYYYYMM(d.year,d.month);
-            return val>=dateRange.fromVal&&val<=dateRange.toVal;
+            return toYYYYMM(d.year,d.month)>=dateRange.fromVal && toYYYYMM(d.year,d.month)<=dateRange.toVal;
         });
         document.getElementById('dateBadge').style.display='block';
     } else {
         document.getElementById('dateBadge').style.display='none';
     }
     dealerData=aggregateByDealer(dateFiltered);
-
-    const state=document.getElementById('stateFilter').value;
-    if(state){ const cs=new Set(); dealerData.filter(d=>d.State===state).forEach(d=>{ if(d.County)cs.add(d.County); }); populateDD('countyFilter',cs); }
-    else populateDD('countyFilter',allCounties);
-
     refreshMap(); updateStats(); updateRBMList(); zoomToFiltered();
 }
 
 function getFiltered(){
-    const nation=document.getElementById('nationFilter').value,
-          state=document.getElementById('stateFilter').value,
-          county=document.getElementById('countyFilter').value,
-          territory=document.getElementById('territoryFilter').value,
-          rbm=document.getElementById('rbmFilter').value,
-          segment=document.getElementById('segmentFilter').value,
-          product=document.getElementById('productFilter').value;
+    const state     = document.getElementById('stateFilter').value;
+    const territory = document.getElementById('territoryFilter').value;
+    const dealer    = document.getElementById('dealerFilter').value;
+    const product   = document.getElementById('productFilter').value;
+    const summary   = document.getElementById('summaryFilter').value;
+
     return dealerData.filter(d=>
         isValidCoord(d.Latitude,d.Longitude)&&
-        (!nation||d.Nation===nation)&&(!state||d.State===state)&&
-        (!county||d.County===county)&&(!territory||d.Territory===territory)&&
-        (!rbm||d.RBM===rbm)&&(!segment||d.Segment===segment)&&
-        (!product||d.Product_Level2===product)
+        ALLOWED_NATIONS.has(d.Nation)&&
+        (!state     ||d.State===state)&&
+        (!territory ||d.Territory===territory)&&
+        (!dealer    ||d.ParentDealerId===dealer)&&
+        (!product   ||d.Mfg_Product_Name===product)&&
+        (!summary   ||d.Summary===summary)&&
     );
 }
 
@@ -675,7 +662,7 @@ function updateRBMList(){
 }
 
 function toggleLayer(t){
-    if(t==='choropleth') choroplethFillLayer.setOptions({visible:document.getElementById('toggleChoropleth').checked});
+    if(t==='choropleth')  choroplethFillLayer.setOptions({visible:document.getElementById('toggleChoropleth').checked});
     if(t==='countyLines'){
         const v=document.getElementById('toggleCountyLines').checked;
         countyLineLayer.setOptions({visible:v}); choroplethHitLayer.setOptions({visible:v});
@@ -691,13 +678,14 @@ function showAEMPopup(p){
     popup.setOptions({position:[p.Longitude,p.Latitude],content:`<div class="popup-content">
         <h3 class="aem">${p.ParentDealerName}</h3>
         <div class="popup-row"><span class="popup-label">Dealer ID:</span><span class="popup-value">${p.ParentDealerId}</span></div>
-        <div class="popup-row"><span class="popup-label">Location:</span><span class="popup-value">${p.County}</span></div>
+        <div class="popup-row"><span class="popup-label">State:</span><span class="popup-value">${p.State}</span></div>
         <div class="popup-row"><span class="popup-label">Territory:</span><span class="popup-value">${p.Territory}</span></div>
         <div class="popup-row"><span class="popup-label">RBM:</span><span class="popup-value">${p.RBM}</span></div>
         <div class="popup-row"><span class="popup-label">MFG Units:</span><span class="popup-value"><strong>${Number(p.Total_MFG_Quantity||0).toLocaleString()}</strong></span></div>
         <div class="popup-row"><span class="popup-label">Equipment:</span><span class="popup-value">${Number(p.Equipment_Count||0).toLocaleString()}</span></div>
-        <div class="popup-row"><span class="popup-label">Product:</span><span class="popup-value">${p.Primary_Product||p.Product_Level2||''}</span></div>
-        <div class="popup-row"><span class="popup-label">Customer Type:</span><span class="popup-value">${p.Primary_CustomerType||''}</span></div>
+        <div class="popup-row"><span class="popup-label">Product:</span><span class="popup-value">${p.Mfg_Product_Name||''}</span></div>
+        <div class="popup-row"><span class="popup-label">Segment:</span><span class="popup-value">${p.Summary||''}</span></div>
+
     </div>`});
     popup.open(map);
 }
