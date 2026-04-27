@@ -706,7 +706,7 @@ function showAEMPopup(p){
 }
 
 function showBranchPopup(p){
-    const addr=[p.Address1,p.Address2,p.City,p.StateRegion,p.PostalCode].filter(Boolean).join(', ');
+    const addr=[p.Address1,p.City,p.StateRegion,p.PostalCode].filter(Boolean).join(', ');
     popup.setOptions({position:[parseFloat(p.Longitude),parseFloat(p.Latitude)],content:`<div class="popup-content">
         <h3 class="branch">${p.DealerName||p.DealerID}</h3>
         <div class="popup-row"><span class="popup-label">Dealer ID:</span><span class="popup-value">${p.DealerID}</span></div>
