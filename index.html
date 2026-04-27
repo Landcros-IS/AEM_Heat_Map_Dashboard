@@ -92,7 +92,7 @@
     .loading-sub  { margin-top: 8px; font-size: 13px; color: #999; }
     .hidden { display: none; }
 
-    .popup-content { font-size: 11px; padding: 5px; max-width: 300px; }
+    .popup-content { font-size: 11px; padding: 5px; max-width: 380px; }
     .popup-content h3 { margin: 0 0 8px 0; font-size: 15px; border-bottom: 2px solid; padding-bottom: 4px; }
     .popup-content h3.aem    { color: #1a73e8; border-color: #1a73e8; }
     .popup-content h3.branch { color: #e8711a; border-color: #e8711a; }
@@ -197,7 +197,7 @@ const AEM_API_ENDPOINT    = 'https://aem-heat-map-api.azurewebsites.net/api/getA
 const BRANCH_API_ENDPOINT = 'https://aem-heat-map-api.azurewebsites.net/api/getDealerLocations';
 const AZURE_MAPS_KEY      = 'D2rj4Lkx4masQx5oO7bANUDBBDm8qLSgAAbH3jW7QdyRkS4CIbcpJQQJ99BEACYeBjFTRtVWAAAgAZMP4Mo0';
 const DEFAULT_CENTER      = [-96.5, 49.0];
-const DEFAULT_ZOOM        = 3.5;
+const DEFAULT_ZOOM        = 4.5;
 const MIN_ZOOM = 2.5, MAX_ZOOM = 18;
 const NA_BOUNDS           = [-168, 24, -52, 72.5];
 const MONTHS              = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -239,7 +239,7 @@ const tooltip = document.getElementById('countyTooltip');
 // ── Colour ramp ────────────────────────────────────────────────────────────
 function lerp(a,b,t){ return Math.round(a+(b-a)*Math.max(0,Math.min(1,t))); }
 function normToColor(n){
-    const stops=[[0,[252,232,232],0.15],[0.2,[232,160,160],0.72],[0.5,[192,80,80],0.85],[0.75,[150,30,30],0.92],[1,[100,0,0],0.97]];
+    const stops=[[0,[240,200,200],0.45],[0.2,[220,120,120],0.82],[0.5,[180,50,50],0.90],[0.75,[130,10,10],0.95],[1,[80,0,0],1.0]];
     for(let i=0;i<stops.length-1;i++){
         const [t0,c0,a0]=stops[i],[t1,c1,a1]=stops[i+1];
         if(n<=t1){const t=(n-t0)/(t1-t0);return `rgba(${lerp(c0[0],c1[0],t)},${lerp(c0[1],c1[1],t)},${lerp(c0[2],c1[2],t)},${(a0+(a1-a0)*t).toFixed(2)})`;}
@@ -596,10 +596,15 @@ function refreshMap(){
     aemSource.clear();
     filtered.forEach(d=>{ aemSource.add(new atlas.data.Feature(new atlas.data.Point([d.Longitude,d.Latitude]),d)); });
 
+    // Filter branch pins by selected dealer if one is chosen, otherwise show all
+    const dealerSel = document.getElementById('dealerFilter').value;
+    const filteredBranches = dealerSel
+        ? branchData.filter(b => b.ParentDealerId === dealerSel || b.DealerID === dealerSel)
+        : branchData;
     branchSource.clear();
-    branchData.forEach(b=>{ branchSource.add(new atlas.data.Feature(new atlas.data.Point([parseFloat(b.Longitude),parseFloat(b.Latitude)]),b)); });
+    filteredBranches.forEach(b=>{ branchSource.add(new atlas.data.Feature(new atlas.data.Point([parseFloat(b.Longitude),parseFloat(b.Latitude)]),b)); });
 
-    document.getElementById('totalBranches').textContent = branchData.length.toLocaleString();
+    document.getElementById('totalBranches').textContent = filteredBranches.length.toLocaleString();
 }
 
 // ── Filters ────────────────────────────────────────────────────────────────
