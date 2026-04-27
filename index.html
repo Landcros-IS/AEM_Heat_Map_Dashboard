@@ -309,8 +309,15 @@ function isValidCoord(lat,lon){
 // ── Date helpers ───────────────────────────────────────────────────────────
 function parseRecordDate(d){
     if(!d) return null;
-    const m=String(d).match(/(\d{4})[-\/](\d{2})/);
-    return m?{year:parseInt(m[1]),month:parseInt(m[2])}:null;
+    const s=String(d);
+    // Format: "2024-03-31" or "2024/03/31"
+    const m1=s.match(/(\d{4})[-\/](\d{2})/);
+    if(m1) return {year:parseInt(m1[1]),month:parseInt(m1[2])};
+    // Format: "Sun, 31 Mar 2024 00:00:00 GMT" (RFC 2822)
+    const months={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+    const m2=s.match(/\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{4})/);
+    if(m2) return {year:parseInt(m2[2]),month:months[m2[1]]};
+    return null;
 }
 function toYYYYMM(y,m){ return y*100+m; }
 
