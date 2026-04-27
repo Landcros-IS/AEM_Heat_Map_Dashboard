@@ -461,8 +461,10 @@ async function initializeApp(){
 
     // Build filter option sets
     rawData.forEach(r=>{
-        const d=parseRecordDate(r.ReportDate);
+        const d=parseRecordDate(r.First_ReportDate||r.ReportDate);
         if(d) availableYears.add(d.year);
+        const d2=parseRecordDate(r.Last_ReportDate);
+        if(d2) availableYears.add(d2.year);
         if(r.State)           allStates.add(r.State);
         if(r.Territory)       allTerritories.add(r.Territory);
         if(r.RBM)             allRBMs.add(r.RBM);
@@ -598,10 +600,16 @@ function applyFilters(){
     const dateRange=getDateRange();
     let dateFiltered=rawData;
     if(dateRange){
+        // Filter aggregated records by date range overlap
+        // A dealer is included if their activity overlaps the selected period
         dateFiltered=rawData.filter(r=>{
-            const d=parseRecordDate(r.ReportDate);
-            if(!d) return false;
-            return toYYYYMM(d.year,d.month)>=dateRange.fromVal && toYYYYMM(d.year,d.month)<=dateRange.toVal;
+            const first=parseRecordDate(r.First_ReportDate||r.ReportDate);
+            const last =parseRecordDate(r.Last_ReportDate ||r.ReportDate);
+            if(!first) return false;
+            const firstVal=toYYYYMM(first.year,first.month);
+            const lastVal =last?toYYYYMM(last.year,last.month):firstVal;
+            // Include if dealer date range overlaps the selected filter range
+            return lastVal>=dateRange.fromVal && firstVal<=dateRange.toVal;
         });
         document.getElementById('dateBadge').style.display='block';
     } else {
